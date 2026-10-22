@@ -43,6 +43,7 @@ def build_report(
     broker_rejections: list[dict],
     journal: Journal,
     session: dict | None = None,
+    challenge: Any | None = None,
 ) -> dict:
     """Assemble the report of a replay run."""
     snapshot = portfolio.snapshot()
@@ -116,6 +117,7 @@ def build_report(
             "broker_count": len(broker_rejections),
         },
         "market": _market_context(dataset, config),
+        "challenge": _challenge_section(challenge),
         "end_of_replay_policy": config.simulation.end_of_replay_policy.value,
         "config": config.to_dict(),
         "config_fingerprint": config.fingerprint(),
@@ -125,6 +127,22 @@ def build_report(
 
     report["report_fingerprint"] = _fingerprint(report)
     return report
+
+
+def _challenge_section(challenge: Any | None) -> dict:
+    """Section challenge : profil, verdict et hypotheses.
+
+    Un profil non verifiable produit un verdict ``INVALID`` : le rapport
+    indique alors ce qui manque pour pouvoir conclure.
+    """
+    if challenge is None:
+        return {"enabled": False}
+    verdict = challenge.evaluate()
+    return {
+        "enabled": True,
+        "profile": challenge.profile.to_dict(),
+        "verdict": verdict.to_dict(),
+    }
 
 
 def _market_context(dataset: Dataset, config: AppConfig) -> dict:

@@ -20,6 +20,8 @@ import json
 import sys
 from pathlib import Path
 
+from .challenge.engine import ChallengeEngine
+from .challenge.profile import ChallengeProfile
 from .core.config import AppConfig, SimulationConfig, load_config
 from .core.errors import EtatMajorError
 from .data.loader import load_csv
@@ -70,6 +72,44 @@ def cmd_validate(args: argparse.Namespace) -> int:
 def cmd_replay(args: argparse.Namespace) -> int:
     config = _build_config(args)
     dataset = _load_dataset(args, config)
+
+    challenge = None
+    if args.challenge_profile:
+        profile = ChallengeProfile.from_toml(args.challenge_profile)
+        # Une simulation de challenge se fait sur le compte du challenge :
+        # le capital simule est celui du profil, sauf override explicite.
+        capital = (
+            args.capital
+            if args.capital is not None
+            else profile.initial_capital
+        )
+        if args.capital is None and abs(
+            capital - config.simulation.initial_capital
+        ) > 1e-9:
+            print(
+                f"note: simulation capital set to {capital:.2f} "
+                f"(challenge profile reference capital), overriding "
+                f"{config.simulation.initial_capital:.2f}"
+            )
+        config = AppConfig(
+            simulation=SimulationConfig(
+                symbol=config.simulation.symbol,
+                timeframe=config.simulation.timeframe,
+                initial_capital=capital,
+                currency=config.simulation.currency,
+                end_of_replay_policy=config.simulation.end_of_replay_policy,
+                mode=config.simulation.mode,
+                seed=config.simulation.seed,
+            ),
+            execution=config.execution,
+            risk=config.risk,
+            source_path=config.source_path,
+        )
+        challenge = ChallengeEngine(
+            profile,
+            initial_capital=capital,
+            reset_hour_utc=args.challenge_reset_hour,
+        )
     strategy = DemoLifecycleStrategy(
         symbol=config.simulation.symbol,
         timeframe=config.simulation.timeframe,
@@ -78,7 +118,9 @@ def cmd_replay(args: argparse.Namespace) -> int:
         exit_index=args.exit_index,
         place_pending_limit=args.pending_limit,
     )
-    engine = ReplayEngine(dataset=dataset, config=config, strategy=strategy)
+    engine = ReplayEngine(
+        dataset=dataset, config=config, strategy=strategy, challenge=challenge
+    )
     result = engine.run()
 
     if args.report:
@@ -124,6 +166,23 @@ def build_parser() -> argparse.ArgumentParser:
     replay.add_argument("--quantity", type=float, default=10_000.0)
     replay.add_argument("--entry-index", type=int, default=2)
     replay.add_argument("--exit-index", type=int, default=6)
+    replay.add_argument(
+        "--challenge-profile",
+        default=None,
+        help="path of a challenge profile (TOML) to simulate against",
+    )
+    replay.add_argument(
+        "--capital",
+        type=float,
+        default=None,
+        help="override the simulated capital (default: the challenge profile capital)",
+    )
+    replay.add_argument(
+        "--challenge-reset-hour",
+        type=int,
+        default=0,
+        help="hour of the daily reset (UTC) used when the profile does not document it",
+    )
     replay.add_argument(
         "--pending-limit",
         action="store_true",

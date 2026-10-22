@@ -170,6 +170,10 @@ class RiskConfig:
     max_order_notional: float = 100_000.0
     max_open_positions: int = 1
     trading_halted: bool = False
+    max_risk_per_trade: float = 0.0
+    require_stop_loss: bool = False
+    max_leverage: float = 1.0
+    kill_switch_path: str | None = None
 
     def validate(self) -> None:
         if self.max_position_quantity <= 0:
@@ -178,6 +182,10 @@ class RiskConfig:
             raise ConfigurationError("risk.max_order_notional must be > 0")
         if self.max_open_positions < 0:
             raise ConfigurationError("risk.max_open_positions must be >= 0")
+        if self.max_risk_per_trade < 0:
+            raise ConfigurationError("risk.max_risk_per_trade must be >= 0")
+        if self.max_leverage <= 0:
+            raise ConfigurationError("risk.max_leverage must be > 0")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
