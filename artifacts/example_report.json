@@ -101,7 +101,14 @@
     "volume": 20000.0
   },
   "fees": 1.4,
-  "journal_events": 14,
+  "journal_events": 15,
+  "market": {
+    "ask": 1.10493,
+    "bid": 1.10483,
+    "last_ts_ns": 1767585600000000000,
+    "mid": 1.10488,
+    "spread": 0.0001
+  },
   "mode": "LABORATORY",
   "orders": {
     "by_status": {
@@ -161,8 +168,17 @@
     "risk": {},
     "risk_count": 0
   },
-  "report_fingerprint": "84806dd81eaf99c3",
+  "report_fingerprint": "46a1846c008bdc77",
   "schema_version": "1.0",
+  "session": {
+    "code_version": "etatmajor/0.2.0",
+    "config_fingerprint": "eaa793eb20f64398",
+    "created_ts_ns": 1767571200000000000,
+    "dataset_fingerprint": "5cd5acdd05a01369",
+    "session_id": "S-3fb48beaa600084c",
+    "strategy_id": "demo-lifecycle",
+    "strategy_version": "1.0.0"
+  },
   "simulation_only": true,
   "strategy": {
     "id": "demo-lifecycle",
