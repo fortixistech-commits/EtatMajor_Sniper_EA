@@ -1,0 +1,27 @@
+         241198 function calls (241102 primitive calls) in 0.846 seconds
+
+   Ordered by: cumulative time
+   List reduced from 217 to 18 due to restriction <18>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.901    0.901 /root/EtatMajor_Sniper_EA/scripts/benchmark_replay.py:87(run_profile)
+        1    0.130    0.130    0.829    0.829 /root/EtatMajor_Sniper_EA/src/etatmajor/replay/engine.py:81(run)
+    10000    0.395    0.000    0.515    0.000 /root/EtatMajor_Sniper_EA/src/etatmajor/replay/engine.py:198(_process_bar_close)
+        3    0.099    0.033    0.134    0.045 /root/EtatMajor_Sniper_EA/src/etatmajor/data/loader.py:96(fingerprint)
+        1    0.000    0.000    0.100    0.100 /root/EtatMajor_Sniper_EA/src/etatmajor/replay/engine.py:482(_build_result)
+        1    0.000    0.000    0.090    0.090 /root/EtatMajor_Sniper_EA/src/etatmajor/reporting/report.py:35(build_report)
+    10004    0.041    0.000    0.083    0.000 /root/EtatMajor_Sniper_EA/src/etatmajor/execution/accounting.py:146(snapshot)
+        1    0.035    0.035    0.072    0.072 /root/EtatMajor_Sniper_EA/scripts/benchmark_replay.py:50(build_dataset)
+        1    0.000    0.000    0.045    0.045 /root/EtatMajor_Sniper_EA/src/etatmajor/data/loader.py:106(to_dict)
+    10000    0.014    0.000    0.038    0.000 /root/EtatMajor_Sniper_EA/src/etatmajor/replay/engine.py:133(_process_bar_open)
+    20002    0.025    0.000    0.035    0.000 /root/EtatMajor_Sniper_EA/src/etatmajor/core/clock.py:19(advance_to)
+    30000    0.018    0.000    0.018    0.000 {method 'update' of '_hashlib.HASH' objects}
+    30003    0.017    0.000    0.017    0.000 {method 'encode' of 'str' objects}
+    10006    0.009    0.000    0.013    0.000 /root/EtatMajor_Sniper_EA/src/etatmajor/execution/accounting.py:115(compute_unrealized)
+    10000    0.008    0.000    0.013    0.000 /usr/lib/python3.13/random.py:498(uniform)
+      2/1    0.000    0.000    0.010    0.010 <frozen importlib._bootstrap>:1349(_find_and_load)
+      2/1    0.000    0.000    0.010    0.010 <frozen importlib._bootstrap>:1304(_find_and_load_unlocked)
+       12    0.000    0.000    0.007    0.001 <frozen importlib._bootstrap_external>:145(_path_stat)
+
+
+
