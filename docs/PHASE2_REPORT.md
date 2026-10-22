@@ -24,6 +24,11 @@
 | Historique | inexistant — aucun fichier existant n'a été supprimé ni écrasé |
 | Dépendances / tests | aucun |
 
+Le dépôt ayant été créé vide, la branche `main` a d'abord été amorcée avec le
+seul commit de fondation (packaging, configuration, fichiers d'environnement),
+sur lequel la branche de travail `feat/phase-2-replay-engine` a été créée.
+La Pull Request ne porte donc que sur la Phase 2.
+
 Un fichier `tests/TestEtatMajorSniper.mq5` avait été créé lors d'un échange
 antérieur (amorçage du dépôt). Il a été **retiré** au début de la Phase 2 :
 l'architecture retenue est Python (le cahier des charges réserve MQL5 aux
@@ -45,7 +50,10 @@ premier commit.
 
 ## 3. Traçabilité des travaux
 
-Commits de la branche `feat/phase-2-replay-engine` :
+`main` : 1 commit de fondation (`chore: bootstrap project packaging,
+configuration and environment files`).
+
+Branche `feat/phase-2-replay-engine` (8 commits au-dessus de `main`) :
 
 | # | Portée |
 | --- | --- |
@@ -56,7 +64,7 @@ Commits de la branche `feat/phase-2-replay-engine` :
 | 5 | Autorité de risque, contrat de stratégie, stratégie de démonstration |
 | 6 | Moteur de replay, politique de fin de replay, rapport et CLI |
 | 7 | Suite de tests (unitaires, intégration, acceptation) |
-| 8 | Dataset d'exemple, sonde NautilusTrader, rapport de phase |
+| 8 | Dataset d'exemple, sonde NautilusTrader, CI et rapport de phase |
 
 ## 4. Fichiers livrés
 
