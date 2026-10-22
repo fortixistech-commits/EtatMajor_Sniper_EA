@@ -1,0 +1,29 @@
+Name                                    Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------
+src/etatmajor/__init__.py                   2      0   100%
+src/etatmajor/cli.py                       74     74     0%   16-149
+src/etatmajor/core/__init__.py              0      0   100%
+src/etatmajor/core/clock.py                14      0   100%
+src/etatmajor/core/config.py              131      2    98%   206-207
+src/etatmajor/core/errors.py               13      2    85%   35-36
+src/etatmajor/core/events.py               99      5    95%   55, 125, 130-132
+src/etatmajor/core/journal.py              27      6    78%   43-48
+src/etatmajor/core/types.py                46      1    98%   22
+src/etatmajor/data/__init__.py              0      0   100%
+src/etatmajor/data/loader.py              167     15    91%   46, 57, 68-69, 150, 152, 183, 186-190, 211, 226-227, 253-254
+src/etatmajor/data/models.py               16      2    88%   35, 38
+src/etatmajor/data/validation.py           21      1    95%   31
+src/etatmajor/execution/__init__.py         0      0   100%
+src/etatmajor/execution/accounting.py     100      8    92%   65, 140-144, 172-173
+src/etatmajor/execution/broker.py         124     15    88%   92, 99, 104, 106, 108, 114, 133, 150, 166-168, 177-180
+src/etatmajor/replay/__init__.py            0      0   100%
+src/etatmajor/replay/engine.py            140      8    94%   175-187, 230, 334, 414-436
+src/etatmajor/reporting/__init__.py         0      0   100%
+src/etatmajor/reporting/report.py          48     11    77%   135-139, 147-180
+src/etatmajor/risk/__init__.py              0      0   100%
+src/etatmajor/risk/governor.py             48      2    96%   109, 112
+src/etatmajor/strategies/__init__.py        0      0   100%
+src/etatmajor/strategies/base.py           35      7    80%   39, 43, 47, 50-53
+src/etatmajor/strategies/demo.py           36      1    97%   94
+---------------------------------------------------------------------
+TOTAL                                    1141    160    86%

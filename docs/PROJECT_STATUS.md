@@ -2,7 +2,7 @@
 
 **Projet :** ETAT-MAJOR SNIPER EA
 **Date :** 2026-10-22
-**Phase courante :** Phase 2 livrée, en attente d'audit du chef de projet
+**Phase courante :** MISSION 0 (audit) livrée, en attente d'audit du chef de projet
 
 ---
 
@@ -10,7 +10,8 @@
 
 | Phase | Objet | Statut | Preuve |
 | --- | --- | --- | --- |
-| 0 | Audit du dépôt et préparation | **Terminée** | ce document, `docs/ARCHITECTURE_DECISIONS.md`, `docs/SECURITY.md` |
+| MISSION 0 | Audit factuel du dépôt (nouvelle feuille de route) | **Terminée** | `docs/audit/INITIAL_AUDIT.md`, `docs/architecture/CURRENT_ARCHITECTURE.md`, `docs/audit/BACKLOG.md`, preuves dans `docs/audit/evidence/` et `tests/results/2026-10-22-mission-0/` |
+| Phase 0 | Audit du dépôt et préparation | **Terminée** | ce document, `docs/ARCHITECTURE_DECISIONS.md`, `docs/SECURITY.md` |
 | 1 | Squelette logiciel et contrats | **Terminée** | `src/etatmajor/**`, `pyproject.toml`, `configs/` |
 | 2 | Prototype du moteur de simulation | **Terminée** | `docs/PHASE2_REPORT.md`, 104 tests, rapport d'exemple versionné |
 | 3 | Ingestion et qualité des données de marché | À faire | — |
@@ -67,7 +68,28 @@
 | ADR-005 | rapport sans donnée d'environnement | arbitrage du chef de projet |
 | ADR-006 | le journal est la source de vérité de l'audit | arbitrage du chef de projet |
 
-## 6. Blocages
+## 6. Resultat de la MISSION 0 (audit)
+
+Conformite mesuree contre les missions du CDC :
+
+| Mission | Conformite | Constat principal |
+| --- | --- | --- |
+| Mission 1 - socle et contrats | ~55 % | modeles `MissionPlan`, `TradeIntent`, `AccountState`, `ChallengeState` absents ; modes non parametrables |
+| Mission 2 - replay deterministe | ~80 % | fonctionnel mais **quadratique** (114 us/bougie a 20 000 bougies) |
+| Mission 3 - donnees | ~30 % | CSV seul, pas de catalogue d'instruments ni de registre de provenance |
+| Mission 4 - execution simulee | ~50 % | pas de latence, ni de fills partiels, ni d'alignement sur le pas de volume |
+| Missions 5 a 16 | absentes | RiskGovernor squelette, aucun Challenge Engine, aucun Sniper Engine, aucun cockpit, aucun adaptateur MT5 |
+
+Defauts majors : AUDIT-D1 (rejeu quadratique), AUDIT-D10 (pas de catalogue
+d'instruments), AUDIT-D11 (socle challenge absent), AUDIT-D12 (RiskGovernor
+sans conscience du challenge).
+
+Ordre de correction propose : **C1 -> C2 -> C3** (corrections du socle, sans
+nouvelle capacite), puis C4 (contrats), C5 (instruments et provenance),
+C6 (Challenge Engine The5ers), C7 (RiskGovernor conscient du challenge),
+C8 (Sniper Engine), C9 (Performance Lab).
+
+## 7. Blocages
 
 * **Aucun blocage technique** pour les Phases 3 et 4.
 * **Livraison de la PR** : la machine ne dispose ni de GitHub CLI, ni de clé

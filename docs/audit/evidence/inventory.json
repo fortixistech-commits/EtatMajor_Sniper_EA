@@ -1,0 +1,1034 @@
+{
+  "circular_dependencies": [],
+  "declared_exceptions": [
+    "ConfigurationError",
+    "DataValidationError",
+    "EtatMajorError",
+    "ExecutionError",
+    "RiskRejected",
+    "StrategyError"
+  ],
+  "exceptions_never_raised": [
+    "EtatMajorError",
+    "ExecutionError",
+    "RiskRejected",
+    "StrategyError"
+  ],
+  "files": [
+    {
+      "classes": [],
+      "code_lines": 211,
+      "functions": [
+        "iter_python_files",
+        "module_name",
+        "analyse_file",
+        "detect_cycles",
+        "main",
+        "visit"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 252,
+      "markers": [
+        "FIXME",
+        "HACK",
+        "TODO",
+        "XXX",
+        "not implemented",
+        "placeholder"
+      ],
+      "module": "scripts.audit_inventory",
+      "path": "scripts/audit_inventory.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 79,
+      "functions": [
+        "generate",
+        "main"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 93,
+      "markers": [],
+      "module": "scripts.generate_sample_data",
+      "path": "scripts/generate_sample_data.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "ProbeConfig",
+        "ProbeStrategy"
+      ],
+      "code_lines": 182,
+      "functions": [
+        "build_instrument",
+        "main",
+        "__init__",
+        "on_start",
+        "on_bar",
+        "on_order_filled",
+        "on_position_opened",
+        "on_position_closed"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 216,
+      "markers": [],
+      "module": "scripts.probe_nautilus",
+      "path": "scripts/probe_nautilus.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 3,
+      "functions": [],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 4,
+      "markers": [],
+      "module": "src.etatmajor",
+      "path": "src/etatmajor/__init__.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 127,
+      "functions": [
+        "_build_config",
+        "_load_dataset",
+        "cmd_validate",
+        "cmd_replay",
+        "build_parser",
+        "main",
+        "add_common"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 153,
+      "markers": [],
+      "module": "src.etatmajor.cli",
+      "path": "src/etatmajor/cli.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 1,
+      "functions": [],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 1,
+      "markers": [],
+      "module": "src.etatmajor.core",
+      "path": "src/etatmajor/core/__init__.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "SimClock"
+      ],
+      "code_lines": 28,
+      "functions": [
+        "ns_to_iso",
+        "advance_to",
+        "now"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 40,
+      "markers": [],
+      "module": "src.etatmajor.core.clock",
+      "path": "src/etatmajor/core/clock.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "SimulationConfig",
+        "ExecutionConfig",
+        "RiskConfig",
+        "AppConfig"
+      ],
+      "code_lines": 202,
+      "functions": [
+        "timeframe_to_ns",
+        "_build",
+        "load_config",
+        "timeframe_ns",
+        "validate",
+        "to_dict",
+        "validate",
+        "to_dict",
+        "validate",
+        "to_dict",
+        "validate",
+        "to_dict",
+        "fingerprint"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 239,
+      "markers": [],
+      "module": "src.etatmajor.core.config",
+      "path": "src/etatmajor/core/config.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "EtatMajorError",
+        "ConfigurationError",
+        "DataValidationError",
+        "RiskRejected",
+        "ExecutionError",
+        "StrategyError"
+      ],
+      "code_lines": 27,
+      "functions": [
+        "__init__",
+        "__init__"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 44,
+      "markers": [],
+      "module": "src.etatmajor.core.errors",
+      "path": "src/etatmajor/core/errors.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "Signal",
+        "RiskDecision",
+        "Order",
+        "Fill",
+        "Position",
+        "JournalEntry"
+      ],
+      "code_lines": 119,
+      "functions": [
+        "to_dict",
+        "to_dict",
+        "to_dict",
+        "to_dict",
+        "is_flat",
+        "unrealized_pnl",
+        "to_dict",
+        "to_dict"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 150,
+      "markers": [],
+      "module": "src.etatmajor.core.events",
+      "path": "src/etatmajor/core/events.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "Journal"
+      ],
+      "code_lines": 38,
+      "functions": [
+        "__init__",
+        "append",
+        "entries",
+        "of_type",
+        "to_list",
+        "write_jsonl",
+        "__len__"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 51,
+      "markers": [],
+      "module": "src.etatmajor.core.journal",
+      "path": "src/etatmajor/core/journal.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "OrderSide",
+        "OrderType",
+        "OrderStatus",
+        "TimeInForce",
+        "EndOfReplayPolicy",
+        "SignalAction",
+        "EventType"
+      ],
+      "code_lines": 61,
+      "functions": [
+        "sign",
+        "opposite"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 88,
+      "markers": [],
+      "module": "src.etatmajor.core.types",
+      "path": "src/etatmajor/core/types.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 1,
+      "functions": [],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 1,
+      "markers": [],
+      "module": "src.etatmajor.data",
+      "path": "src/etatmajor/data/__init__.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "Dataset"
+      ],
+      "code_lines": 278,
+      "functions": [
+        "parse_timestamp",
+        "_to_float",
+        "_normalise_header",
+        "load_csv",
+        "__len__",
+        "first_ts_ns",
+        "last_ts_ns",
+        "fingerprint",
+        "to_dict"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 320,
+      "markers": [],
+      "module": "src.etatmajor.data.loader",
+      "path": "src/etatmajor/data/loader.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "Bar"
+      ],
+      "code_lines": 37,
+      "functions": [
+        "duration_ns",
+        "to_dict"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 46,
+      "markers": [],
+      "module": "src.etatmajor.data.models",
+      "path": "src/etatmajor/data/models.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "DataQualityReport"
+      ],
+      "code_lines": 37,
+      "functions": [
+        "ok",
+        "add_error",
+        "add_warning",
+        "to_dict"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 47,
+      "markers": [],
+      "module": "src.etatmajor.data.validation",
+      "path": "src/etatmajor/data/validation.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 1,
+      "functions": [],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 1,
+      "markers": [],
+      "module": "src.etatmajor.execution",
+      "path": "src/etatmajor/execution/__init__.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "PortfolioSnapshot",
+        "Portfolio"
+      ],
+      "code_lines": 153,
+      "functions": [
+        "open_positions",
+        "__init__",
+        "position",
+        "net_quantity",
+        "open_symbols",
+        "apply_fill",
+        "mark",
+        "compute_unrealized",
+        "unrealized_pnl",
+        "equity",
+        "net_pnl",
+        "notional",
+        "snapshot",
+        "to_dict"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 183,
+      "markers": [],
+      "module": "src.etatmajor.execution.accounting",
+      "path": "src/etatmajor/execution/accounting.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "SimulatedBroker"
+      ],
+      "code_lines": 182,
+      "functions": [
+        "__init__",
+        "_next_order_id",
+        "new_order_id",
+        "_slippage",
+        "_commission",
+        "submit",
+        "_pre_trade_check",
+        "cancel",
+        "on_bar_open",
+        "execute_market",
+        "_maybe_fill",
+        "_market_price_from",
+        "open_orders"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 212,
+      "markers": [],
+      "module": "src.etatmajor.execution.broker",
+      "path": "src/etatmajor/execution/broker.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 1,
+      "functions": [],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 1,
+      "markers": [],
+      "module": "src.etatmajor.replay",
+      "path": "src/etatmajor/replay/__init__.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "ReplayResult",
+        "ReplayEngine"
+      ],
+      "code_lines": 462,
+      "functions": [
+        "__init__",
+        "run",
+        "_call_on_start",
+        "_process_bar_open",
+        "_process_bar_close",
+        "_handle_signal",
+        "_finish_replay",
+        "_close_position_at_last_price",
+        "_synthetic_bar",
+        "_build_result"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 504,
+      "markers": [],
+      "module": "src.etatmajor.replay.engine",
+      "path": "src/etatmajor/replay/engine.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 1,
+      "functions": [],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 1,
+      "markers": [],
+      "module": "src.etatmajor.reporting",
+      "path": "src/etatmajor/reporting/__init__.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 156,
+      "functions": [
+        "_reject_summary",
+        "build_report",
+        "_fingerprint",
+        "write_report",
+        "render_summary"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 180,
+      "markers": [],
+      "module": "src.etatmajor.reporting.report",
+      "path": "src/etatmajor/reporting/report.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 8,
+      "functions": [],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 10,
+      "markers": [],
+      "module": "src.etatmajor.risk",
+      "path": "src/etatmajor/risk/__init__.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "OrderRequest",
+        "RiskGovernor",
+        "MinimalRiskGovernor"
+      ],
+      "code_lines": 92,
+      "functions": [
+        "_reduces_existing_exposure",
+        "notional",
+        "to_dict",
+        "authorize",
+        "__init__",
+        "authorize"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 115,
+      "markers": [],
+      "module": "src.etatmajor.risk.governor",
+      "path": "src/etatmajor/risk/governor.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 1,
+      "functions": [],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 1,
+      "markers": [],
+      "module": "src.etatmajor.strategies",
+      "path": "src/etatmajor/strategies/__init__.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "StrategyContext",
+        "Strategy"
+      ],
+      "code_lines": 55,
+      "functions": [
+        "close",
+        "close_price",
+        "last_bars",
+        "position_quantity",
+        "on_start",
+        "on_bar",
+        "on_stop"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 73,
+      "markers": [],
+      "module": "src.etatmajor.strategies.base",
+      "path": "src/etatmajor/strategies/base.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "DemoLifecycleStrategy"
+      ],
+      "code_lines": 97,
+      "functions": [
+        "__init__",
+        "on_start",
+        "on_bar",
+        "on_stop",
+        "_signal"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 117,
+      "markers": [],
+      "module": "src.etatmajor.strategies.demo",
+      "path": "src/etatmajor/strategies/demo.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 149,
+      "functions": [
+        "test_full_run_produces_a_report_and_a_journal",
+        "test_validate_command_reports_the_quality_of_the_dataset",
+        "test_the_cli_refuses_a_malformed_dataset",
+        "test_the_repository_shipped_example_report_is_consistent"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.core.config",
+        "etatmajor.data.loader",
+        "etatmajor.replay.engine",
+        "etatmajor.strategies.demo",
+        "tests.conftest"
+      ],
+      "lines": 172,
+      "markers": [],
+      "module": "tests.acceptance.test_cli",
+      "path": "tests/acceptance/test_cli.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 112,
+      "functions": [
+        "make_config",
+        "make_dataset",
+        "sample_csv_path",
+        "sample_dataset",
+        "config"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.core.config",
+        "etatmajor.core.types",
+        "etatmajor.data.loader",
+        "etatmajor.data.models"
+      ],
+      "lines": 128,
+      "markers": [],
+      "module": "tests.conftest",
+      "path": "tests/conftest.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 74,
+      "functions": [
+        "build",
+        "test_two_identical_replays_produce_identical_reports",
+        "test_two_identical_replays_produce_identical_journals",
+        "test_the_report_contains_no_wall_clock_information",
+        "test_replay_is_stable_across_processes",
+        "test_a_different_seed_changes_the_random_slippage_only"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.data.loader",
+        "etatmajor.replay.engine",
+        "etatmajor.strategies.demo",
+        "tests.conftest"
+      ],
+      "lines": 96,
+      "markers": [],
+      "module": "tests.integration.test_determinism",
+      "path": "tests/integration/test_determinism.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 46,
+      "functions": [
+        "no_network",
+        "test_replay_runs_with_networking_disabled",
+        "test_no_broker_or_trading_module_is_imported",
+        "test_the_package_does_not_import_any_broker_library",
+        "forbidden"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.replay.engine",
+        "etatmajor.strategies.demo",
+        "tests.conftest"
+      ],
+      "lines": 65,
+      "markers": [],
+      "module": "tests.integration.test_no_network",
+      "path": "tests/integration/test_no_network.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "SpyStrategy"
+      ],
+      "code_lines": 194,
+      "functions": [
+        "run",
+        "test_full_lifecycle_signal_order_fill_position_close",
+        "test_order_is_not_executed_on_the_bar_that_produced_the_signal",
+        "test_gap_dataset_executes_at_the_next_bar_open_not_at_the_signal_close",
+        "test_strategy_cannot_observe_future_bars",
+        "test_refused_order_does_not_change_the_portfolio",
+        "test_pending_orders_are_cancelled_at_the_end_of_the_replay",
+        "test_close_at_last_price_policy_flattens_the_position",
+        "test_mark_to_market_policy_keeps_the_position_open",
+        "test_costs_are_integrated_in_the_net_result",
+        "test_spread_and_slippage_reduce_the_realised_pnl",
+        "test_broker_rejection_is_recorded_and_leaves_no_trace",
+        "test_journal_records_the_full_decision_chain",
+        "test_empty_dataset_is_refused",
+        "on_bar"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.core.types",
+        "etatmajor.data.loader",
+        "etatmajor.replay.engine",
+        "etatmajor.strategies.demo",
+        "tests.conftest"
+      ],
+      "lines": 254,
+      "markers": [],
+      "module": "tests.integration.test_replay_engine",
+      "path": "tests/integration/test_replay_engine.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 100,
+      "functions": [
+        "make_fill",
+        "test_initial_state",
+        "test_opening_a_long_position_marks_to_market",
+        "test_closing_a_long_position_realises_the_pnl",
+        "test_average_price_is_weighted",
+        "test_short_then_buy_realises_the_loss",
+        "test_partially_closing_keeps_the_average_price",
+        "test_flipping_a_position_resets_the_average_price",
+        "test_accounting_invariants_hold_after_a_sequence",
+        "test_commission_is_never_counted_twice"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.core.events",
+        "etatmajor.core.types",
+        "etatmajor.execution.accounting"
+      ],
+      "lines": 127,
+      "markers": [],
+      "module": "tests.unit.test_accounting",
+      "path": "tests/unit/test_accounting.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 139,
+      "functions": [
+        "make_order",
+        "test_spread_is_applied_adversely_on_both_sides",
+        "test_fixed_slippage_is_applied_adversely",
+        "test_random_slippage_stays_within_its_bounds",
+        "test_commission_is_charged_per_lot_and_per_side",
+        "test_fixed_commission_is_added",
+        "test_broker_can_reject_an_order",
+        "test_broker_rejects_invalid_quantity",
+        "test_limit_order_fills_only_when_the_price_is_reached",
+        "test_stop_order_is_not_triggered_when_the_level_is_not_reached",
+        "test_stop_order_triggers_on_the_stop_price",
+        "test_stop_order_gap_is_filled_at_the_open",
+        "test_cancelling_an_order_removes_it_from_the_pending_list",
+        "test_broker_is_deterministic_for_a_given_seed"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.core.config",
+        "etatmajor.core.events",
+        "etatmajor.core.types",
+        "etatmajor.data.models",
+        "etatmajor.execution.broker"
+      ],
+      "lines": 176,
+      "markers": [],
+      "module": "tests.unit.test_broker",
+      "path": "tests/unit/test_broker.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 18,
+      "functions": [
+        "test_clock_starts_at_zero",
+        "test_clock_moves_forward",
+        "test_clock_accepts_the_same_timestamp",
+        "test_clock_refuses_to_move_backwards",
+        "test_iso_conversion"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.core.clock"
+      ],
+      "lines": 31,
+      "markers": [],
+      "module": "tests.unit.test_clock",
+      "path": "tests/unit/test_clock.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 125,
+      "functions": [
+        "test_valid_configuration_is_accepted",
+        "test_invalid_simulation_configuration_is_refused",
+        "test_invalid_execution_configuration_is_refused",
+        "test_invalid_risk_configuration_is_refused",
+        "test_timeframe_conversion",
+        "test_repository_configuration_files_are_valid",
+        "test_unknown_section_is_refused",
+        "test_unknown_key_is_refused",
+        "test_invalid_end_of_replay_policy_is_refused",
+        "test_missing_file_is_refused",
+        "test_invalid_toml_is_refused",
+        "test_fingerprint_is_stable_and_sensitive",
+        "test_end_of_replay_policy_values"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.core.config",
+        "etatmajor.core.errors",
+        "etatmajor.core.types"
+      ],
+      "lines": 155,
+      "markers": [],
+      "module": "tests.unit.test_config",
+      "path": "tests/unit/test_config.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 146,
+      "functions": [
+        "write_csv",
+        "load",
+        "test_valid_file_is_accepted",
+        "test_missing_column_is_rejected",
+        "test_duplicate_timestamp_is_rejected",
+        "test_out_of_order_timestamp_is_rejected",
+        "test_inconsistent_ohlc_is_rejected",
+        "test_high_below_low_is_rejected",
+        "test_non_positive_price_is_rejected",
+        "test_non_numeric_price_is_rejected",
+        "test_unparsable_timestamp_is_rejected",
+        "test_empty_file_is_rejected",
+        "test_missing_bars_are_reported_as_a_warning",
+        "test_epoch_timestamps_are_supported",
+        "test_strict_false_collects_errors_without_raising"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.core.errors",
+        "etatmajor.data.loader"
+      ],
+      "lines": 180,
+      "markers": [],
+      "module": "tests.unit.test_loader_validation",
+      "path": "tests/unit/test_loader_validation.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 76,
+      "functions": [
+        "snapshot_with_open_position",
+        "test_authorises_a_conforming_request",
+        "test_refuses_a_quantity_above_the_limit",
+        "test_refuses_a_notional_above_the_limit",
+        "test_refuses_when_trading_is_halted",
+        "test_refuses_a_new_position_when_the_position_limit_is_reached",
+        "test_allows_an_order_that_reduces_an_existing_position",
+        "test_refuses_a_non_positive_quantity",
+        "test_invalid_risk_configuration_is_refused"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.core.config",
+        "etatmajor.core.events",
+        "etatmajor.core.types",
+        "etatmajor.execution.accounting",
+        "etatmajor.risk.governor"
+      ],
+      "lines": 98,
+      "markers": [],
+      "module": "tests.unit.test_risk_governor",
+      "path": "tests/unit/test_risk_governor.py",
+      "stub_functions": []
+    }
+  ],
+  "files_with_markers": [
+    {
+      "markers": [
+        "FIXME",
+        "HACK",
+        "TODO",
+        "XXX",
+        "not implemented",
+        "placeholder"
+      ],
+      "path": "scripts/audit_inventory.py"
+    }
+  ],
+  "files_without_docstring": [],
+  "generated_at": "2026-10-22T11:41:55.492505+00:00",
+  "import_graph": {
+    "scripts.audit_inventory": [],
+    "scripts.generate_sample_data": [],
+    "scripts.probe_nautilus": [],
+    "src.etatmajor": [],
+    "src.etatmajor.cli": [],
+    "src.etatmajor.core": [],
+    "src.etatmajor.core.clock": [],
+    "src.etatmajor.core.config": [],
+    "src.etatmajor.core.errors": [],
+    "src.etatmajor.core.events": [],
+    "src.etatmajor.core.journal": [],
+    "src.etatmajor.core.types": [],
+    "src.etatmajor.data": [],
+    "src.etatmajor.data.loader": [],
+    "src.etatmajor.data.models": [],
+    "src.etatmajor.data.validation": [],
+    "src.etatmajor.execution": [],
+    "src.etatmajor.execution.accounting": [],
+    "src.etatmajor.execution.broker": [],
+    "src.etatmajor.replay": [],
+    "src.etatmajor.replay.engine": [],
+    "src.etatmajor.reporting": [],
+    "src.etatmajor.reporting.report": [],
+    "src.etatmajor.risk": [],
+    "src.etatmajor.risk.governor": [],
+    "src.etatmajor.strategies": [],
+    "src.etatmajor.strategies.base": [],
+    "src.etatmajor.strategies.demo": [],
+    "tests.acceptance.test_cli": [
+      "etatmajor.core.config",
+      "etatmajor.data.loader",
+      "etatmajor.replay.engine",
+      "etatmajor.strategies.demo",
+      "tests.conftest"
+    ],
+    "tests.conftest": [
+      "etatmajor.core.config",
+      "etatmajor.core.types",
+      "etatmajor.data.loader",
+      "etatmajor.data.models"
+    ],
+    "tests.integration.test_determinism": [
+      "etatmajor.data.loader",
+      "etatmajor.replay.engine",
+      "etatmajor.strategies.demo",
+      "tests.conftest"
+    ],
+    "tests.integration.test_no_network": [
+      "etatmajor.replay.engine",
+      "etatmajor.strategies.demo",
+      "tests.conftest"
+    ],
+    "tests.integration.test_replay_engine": [
+      "etatmajor.core.types",
+      "etatmajor.data.loader",
+      "etatmajor.replay.engine",
+      "etatmajor.strategies.demo",
+      "tests.conftest"
+    ],
+    "tests.unit.test_accounting": [
+      "etatmajor.core.events",
+      "etatmajor.core.types",
+      "etatmajor.execution.accounting"
+    ],
+    "tests.unit.test_broker": [
+      "etatmajor.core.config",
+      "etatmajor.core.events",
+      "etatmajor.core.types",
+      "etatmajor.data.models",
+      "etatmajor.execution.broker"
+    ],
+    "tests.unit.test_clock": [
+      "etatmajor.core.clock"
+    ],
+    "tests.unit.test_config": [
+      "etatmajor.core.config",
+      "etatmajor.core.errors",
+      "etatmajor.core.types"
+    ],
+    "tests.unit.test_loader_validation": [
+      "etatmajor.core.errors",
+      "etatmajor.data.loader"
+    ],
+    "tests.unit.test_risk_governor": [
+      "etatmajor.core.config",
+      "etatmajor.core.events",
+      "etatmajor.core.types",
+      "etatmajor.execution.accounting",
+      "etatmajor.risk.governor"
+    ]
+  },
+  "python_files": 39,
+  "stub_functions": [],
+  "total_code_lines": 3819,
+  "total_lines": 4625,
+  "unreferenced_symbols": [
+    {
+      "module": "scripts.probe_nautilus",
+      "symbol": "on_order_filled"
+    },
+    {
+      "module": "scripts.probe_nautilus",
+      "symbol": "on_position_opened"
+    },
+    {
+      "module": "scripts.probe_nautilus",
+      "symbol": "on_position_closed"
+    },
+    {
+      "module": "src.etatmajor.core.errors",
+      "symbol": "RiskRejected"
+    },
+    {
+      "module": "src.etatmajor.core.errors",
+      "symbol": "ExecutionError"
+    },
+    {
+      "module": "src.etatmajor.core.errors",
+      "symbol": "StrategyError"
+    },
+    {
+      "module": "src.etatmajor.core.types",
+      "symbol": "opposite"
+    },
+    {
+      "module": "src.etatmajor.core.types",
+      "symbol": "TimeInForce"
+    },
+    {
+      "module": "src.etatmajor.data.models",
+      "symbol": "duration_ns"
+    },
+    {
+      "module": "src.etatmajor.data.validation",
+      "symbol": "add_error"
+    },
+    {
+      "module": "src.etatmajor.execution.accounting",
+      "symbol": "open_symbols"
+    },
+    {
+      "module": "src.etatmajor.strategies.base",
+      "symbol": "close_price"
+    },
+    {
+      "module": "src.etatmajor.strategies.base",
+      "symbol": "last_bars"
+    }
+  ]
+}

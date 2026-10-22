@@ -1,0 +1,47 @@
+{
+  "generated_at": "2026-10-22T12:01:58.956384+00:00",
+  "platform": "Linux aarch64",
+  "profiles": [
+    {
+      "bars": 240,
+      "bars_per_second": 23231,
+      "build_seconds": 0.0006,
+      "executions": 0,
+      "max_rss_mb": 19.5,
+      "microseconds_per_bar": 43.045,
+      "orders": 0,
+      "replay_seconds": 0.0103
+    },
+    {
+      "bars": 5000,
+      "bars_per_second": 25429,
+      "build_seconds": 0.0123,
+      "executions": 0,
+      "max_rss_mb": 21.2,
+      "microseconds_per_bar": 39.325,
+      "orders": 0,
+      "replay_seconds": 0.1966
+    },
+    {
+      "bars": 10000,
+      "bars_per_second": 15111,
+      "build_seconds": 0.0175,
+      "executions": 0,
+      "max_rss_mb": 23.1,
+      "microseconds_per_bar": 66.177,
+      "orders": 0,
+      "replay_seconds": 0.6618
+    },
+    {
+      "bars": 20000,
+      "bars_per_second": 8753,
+      "build_seconds": 0.0352,
+      "executions": 0,
+      "max_rss_mb": 26.1,
+      "microseconds_per_bar": 114.237,
+      "orders": 0,
+      "replay_seconds": 2.2847
+    }
+  ],
+  "python": "3.13.7"
+}
