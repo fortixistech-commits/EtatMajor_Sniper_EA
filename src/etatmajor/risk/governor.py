@@ -7,6 +7,7 @@ from typing import Protocol, runtime_checkable
 
 from ..core.config import RiskConfig
 from ..core.events import RiskDecision
+from ..core.models import AuditEvent
 from ..core.types import OrderSide
 from ..execution.accounting import PortfolioSnapshot
 
@@ -57,8 +58,32 @@ class MinimalRiskGovernor:
     def __init__(self, config: RiskConfig) -> None:
         config.validate()
         self.config = config
+        self.audit: list[AuditEvent] = []
+
+    def _record(self, request: OrderRequest, decision: RiskDecision, ts_ns: int) -> None:
+        """Trace d'audit : chaque decision, autorisation ou refus, est conservee."""
+        self.audit.append(
+            AuditEvent(
+                ts_ns=ts_ns,
+                actor="risk-governor",
+                action="AUTHORIZE" if decision.approved else "REFUSE",
+                subject=f"{request.symbol} {request.side.value} {request.quantity}",
+                reason=decision.reason,
+                payload=request.to_dict(),
+            )
+        )
 
     def authorize(
+        self,
+        request: OrderRequest,
+        snapshot: PortfolioSnapshot,
+        ts_ns: int = 0,
+    ) -> RiskDecision:
+        decision = self._authorize(request, snapshot)
+        self._record(request, decision, ts_ns)
+        return decision
+
+    def _authorize(
         self, request: OrderRequest, snapshot: PortfolioSnapshot
     ) -> RiskDecision:
         if self.config.trading_halted:

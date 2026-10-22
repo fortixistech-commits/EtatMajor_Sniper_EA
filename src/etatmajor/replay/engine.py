@@ -24,6 +24,7 @@ from ..core.clock import SimClock
 from ..core.config import AppConfig
 from ..core.events import Fill, Order, Signal
 from ..core.journal import Journal
+from ..core.session import SessionIdentity, build_session_identity
 from ..core.errors import ExecutionError, StrategyError
 from ..core.types import EventType, OrderSide, OrderStatus, OrderType, SignalAction
 from ..data.loader import Dataset
@@ -31,6 +32,7 @@ from ..execution.accounting import Portfolio
 from ..execution.broker import SimulatedBroker
 from ..risk.governor import MinimalRiskGovernor, OrderRequest, RiskGovernor
 from ..strategies.base import Strategy, StrategyContext, VisibleBars
+from ..version import code_version
 
 
 @dataclass
@@ -78,6 +80,7 @@ class ReplayEngine:
         self.risk_rejections: list[dict] = []
         self.broker_rejections: list[dict] = []
         self.expired_signals: int = 0
+        self.session: SessionIdentity | None = None
 
     # -- main loop ----------------------------------------------------
     def run(self) -> ReplayResult:
@@ -97,6 +100,22 @@ class ReplayEngine:
         )
 
         bars = self.dataset.bars
+        self.session = build_session_identity(
+            strategy_id=getattr(self.strategy, "strategy_id", "unknown"),
+            strategy_version=getattr(self.strategy, "strategy_version", "unknown"),
+            config_fingerprint=self.config.fingerprint(),
+            dataset_fingerprint=self.dataset.fingerprint(),
+            created_ts_ns=bars[0].ts_open_ns,
+            code_version=code_version(),
+        )
+        self.journal.append(
+            self.clock.now(),
+            EventType.REPLAY_STARTED.value,
+            {
+                "session_id": self.session.session_id,
+                "code_version": self.session.code_version,
+            },
+        )
         self._call_on_start(bars)
         for index, bar in enumerate(bars):
             self._process_bar_open(index, bar)
@@ -306,7 +325,9 @@ class ReplayEngine:
             quantity=signal.quantity,
             reference_price=float(reference_price),
         )
-        decision = self.risk_governor.authorize(request, self.portfolio.snapshot())
+        decision = self.risk_governor.authorize(
+            request, self.portfolio.snapshot(), ts_ns=self.clock.now()
+        )
         self.journal.append(
             self.clock.now(),
             EventType.RISK_DECISION.value,
@@ -387,6 +408,7 @@ class ReplayEngine:
                     "symbol": order.symbol,
                     "quantity": order.quantity,
                     "reason": signal.reason,
+                    "result": self.broker.result_for(order).to_dict(),
                 },
             )
 
@@ -442,6 +464,11 @@ class ReplayEngine:
                 "end_of_replay_policy": policy.value,
                 "equity": self.portfolio.equity,
                 "net_pnl": self.portfolio.net_pnl,
+                "account": self.portfolio.account_state(self.clock.now()).to_dict(),
+                "portfolio": self.portfolio.portfolio_state(self.clock.now()).to_dict(),
+                "executions": [
+                    event.to_dict() for event in self.broker.execution_events()
+                ],
             },
         )
 
@@ -549,6 +576,7 @@ class ReplayEngine:
             risk_rejections=self.risk_rejections,
             broker_rejections=self.broker_rejections,
             journal=self.journal,
+            session=self.session.to_dict() if self.session else None,
         )
         return ReplayResult(
             report=report,
