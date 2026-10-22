@@ -135,7 +135,30 @@ Le script crée `.venv-nautilus` (NautilusTrader 1.231.0 épinglé) et produit
 sonde est **hors moteur de production** ; elle documente l'évaluation
 d'ADR-001.
 
-## 9. Diagnostic
+## 9. Archiver les résultats de test
+
+Chaque campagne de verification est archivee dans un dossier date :
+
+```bash
+DEST=tests/results/$(date +%F)-<mission>
+mkdir -p "$DEST"
+.venv/bin/python -m pytest -v --junitxml="$DEST/junit.xml" > "$DEST/pytest-console.txt" 2>&1
+.venv/bin/python -m coverage run --source=src/etatmajor -m pytest -q > "$DEST/pytest-coverage-run.txt" 2>&1
+.venv/bin/python -m coverage report -m > "$DEST/coverage-report.txt"
+.venv/bin/python -m coverage json -o "$DEST/coverage.json"
+```
+
+Les audits d'architecture et de performance produisent leurs preuves dans
+`docs/audit/evidence/` :
+
+```bash
+.venv/bin/python scripts/audit_inventory.py --output docs/audit/evidence
+.venv/bin/python scripts/benchmark_replay.py --output docs/audit/evidence
+```
+
+Convention detaillee : `tests/results/README.md`.
+
+## 10. Diagnostic
 
 | Symptôme | Cause probable | Action |
 | --- | --- | --- |
@@ -145,7 +168,7 @@ d'ADR-001.
 | rapport vide / 0 ordre | stratégie sans signal sur le dataset | vérifier les index d'entrée/sortie |
 | `no market for <symbol>` (sonde Nautilus) | type de barre incompatible | utiliser un bar type `LAST` |
 
-## 10. Limites d'exploitation
+## 11. Limites d'exploitation
 
 * Le moteur est mono-instrument et mono-timeframe.
 * Les coûts sont modélisés, non mesurés sur un carnet réel.
