@@ -1,46 +1,46 @@
 {
-  "generated_at": "2026-10-22T12:01:58.956384+00:00",
+  "generated_at": "2026-10-22T14:16:43.965303+00:00",
   "platform": "Linux aarch64",
   "profiles": [
     {
       "bars": 240,
-      "bars_per_second": 23231,
-      "build_seconds": 0.0006,
+      "bars_per_second": 39425,
+      "build_seconds": 0.0005,
       "executions": 0,
       "max_rss_mb": 19.5,
-      "microseconds_per_bar": 43.045,
+      "microseconds_per_bar": 25.364,
       "orders": 0,
-      "replay_seconds": 0.0103
+      "replay_seconds": 0.0061
     },
     {
       "bars": 5000,
-      "bars_per_second": 25429,
-      "build_seconds": 0.0123,
+      "bars_per_second": 171554,
+      "build_seconds": 0.013,
       "executions": 0,
       "max_rss_mb": 21.2,
-      "microseconds_per_bar": 39.325,
+      "microseconds_per_bar": 5.829,
       "orders": 0,
-      "replay_seconds": 0.1966
+      "replay_seconds": 0.0291
     },
     {
       "bars": 10000,
-      "bars_per_second": 15111,
-      "build_seconds": 0.0175,
+      "bars_per_second": 173648,
+      "build_seconds": 0.0124,
       "executions": 0,
-      "max_rss_mb": 23.1,
-      "microseconds_per_bar": 66.177,
+      "max_rss_mb": 22.8,
+      "microseconds_per_bar": 5.759,
       "orders": 0,
-      "replay_seconds": 0.6618
+      "replay_seconds": 0.0576
     },
     {
       "bars": 20000,
-      "bars_per_second": 8753,
-      "build_seconds": 0.0352,
+      "bars_per_second": 171951,
+      "build_seconds": 0.0259,
       "executions": 0,
-      "max_rss_mb": 26.1,
-      "microseconds_per_bar": 114.237,
+      "max_rss_mb": 25.9,
+      "microseconds_per_bar": 5.816,
       "orders": 0,
-      "replay_seconds": 2.2847
+      "replay_seconds": 0.1163
     }
   ],
   "python": "3.13.7"

@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-10-22T14:17:18.153694+00:00",
+  "platform": "Linux aarch64",
+  "profiles": [
+    {
+      "bars": 100000,
+      "bars_per_second": 98080,
+      "build_seconds": 0.2254,
+      "executions": 0,
+      "max_rss_mb": 51.1,
+      "microseconds_per_bar": 10.196,
+      "orders": 0,
+      "replay_seconds": 1.0196
+    },
+    {
+      "bars": 1000000,
+      "bars_per_second": 103247,
+      "build_seconds": 2.51,
+      "executions": 0,
+      "max_rss_mb": 334.8,
+      "microseconds_per_bar": 9.685,
+      "orders": 0,
+      "replay_seconds": 9.6855
+    }
+  ],
+  "python": "3.13.7"
+}
