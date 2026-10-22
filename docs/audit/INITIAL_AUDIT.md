@@ -519,10 +519,11 @@ corrections du socle existant, prerequisites à toute affirmation de fiabilité.
 | AUDIT-D8 — fingerprint recalculé 3 fois | **corrigé** | C3 | cache dans `Dataset` |
 | AUDIT-D9 — détection de trous approximative | ouvert | C5 | — |
 | AUDIT-D10 — pas de catalogue d'instruments | ouvert | C5 | — |
-| AUDIT-D11 — socle challenge absent | ouvert | C4, C6 | — |
+| AUDIT-D11 — socle challenge absent | **partiellement corrigé** | C4 (modèles `ChallengeState`, `MissionPlan`, `TradeIntent`, `AccountState`, `PortfolioState`, `MarketSnapshot`, `OrderResult`, `ExecutionEvent`, `AuditEvent` + identifiant de session + test d'architecture) ; C6 (moteur) reste ouvert | `tests/unit/test_architecture.py`, `tests/unit/test_core_models.py` |
 | AUDIT-D12 — RiskGovernor sans conscience du challenge | ouvert | C7 | — |
 
-Rapport de livraison de la phase A : `docs/audit/PHASE_A_REPORT.md`.
+Rapports de livraison : `docs/audit/PHASE_A_REPORT.md` (C1→C3),
+`docs/audit/PHASE_B_REPORT.md` (C4).
 
 ## 11. Décision proposée
 

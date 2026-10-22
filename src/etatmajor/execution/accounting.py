@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from ..core.events import Fill, Position
+from ..core.models import AccountState, PortfolioState
 
 
 @dataclass(frozen=True)
@@ -155,6 +156,53 @@ class Portfolio:
             fees=self.fees,
             net_pnl=self.cash + unrealized - self.initial_capital,
             positions=positions,
+        )
+
+    def account_state(self, ts_ns: int, account_id: str = "ACCOUNT-001") -> AccountState:
+        """Etat du compte (solde, equity, marge) a l'instant ``ts_ns``."""
+        equity = self.equity
+        return AccountState(
+            account_id=account_id,
+            currency=self.currency,
+            balance=self.cash,
+            equity=equity,
+            ts_ns=ts_ns,
+            margin_used=0.0,
+            margin_available=self.cash,
+        )
+
+    def portfolio_state(self, ts_ns: int) -> PortfolioState:
+        """Etat du portefeuille : positions, exposition par instrument."""
+        positions = tuple(
+            {
+                "symbol": symbol,
+                "quantity": position.quantity,
+                "average_price": position.average_price,
+                "mark_price": self.mark_prices.get(symbol, position.last_price),
+                "unrealized_pnl": position.unrealized_pnl(
+                    self.mark_prices.get(symbol, position.last_price)
+                ),
+            }
+            for symbol, position in sorted(self.positions.items())
+        )
+        exposure: dict[str, float] = {}
+        gross = 0.0
+        net = 0.0
+        for symbol, position in self.positions.items():
+            if position.is_flat:
+                continue
+            mark = self.mark_prices.get(symbol, position.last_price)
+            value = abs(position.quantity) * mark
+            exposure[symbol] = value
+            gross += value
+            net += position.quantity * mark
+        return PortfolioState(
+            ts_ns=ts_ns,
+            positions=positions,
+            open_orders=(),
+            exposure_by_symbol=exposure,
+            gross_exposure=gross,
+            net_exposure=net,
         )
 
     def to_dict(self) -> dict:

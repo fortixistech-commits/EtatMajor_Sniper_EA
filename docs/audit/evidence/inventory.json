@@ -263,6 +263,77 @@
     },
     {
       "classes": [
+        "DataQuality",
+        "ChallengeState",
+        "MarketTick",
+        "MarketSnapshot",
+        "MissionPlan",
+        "TradeIntent",
+        "OrderResult",
+        "AccountState",
+        "PortfolioState",
+        "ExecutionEvent",
+        "AuditEvent"
+      ],
+      "code_lines": 282,
+      "functions": [
+        "is_conclusive",
+        "__post_init__",
+        "spread",
+        "mid",
+        "to_dict",
+        "__post_init__",
+        "spread",
+        "is_fresh",
+        "to_dict",
+        "__post_init__",
+        "risk_per_unit",
+        "reward_risk_ratio",
+        "is_expired",
+        "to_dict",
+        "symbol",
+        "side",
+        "quantity",
+        "reference_price",
+        "notional",
+        "to_dict",
+        "is_filled",
+        "is_rejected",
+        "to_dict",
+        "drawdown_amount",
+        "to_dict",
+        "open_positions",
+        "to_dict",
+        "to_dict",
+        "to_dict"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 352,
+      "markers": [],
+      "module": "src.etatmajor.core.models",
+      "path": "src/etatmajor/core/models.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "SessionIdentity"
+      ],
+      "code_lines": 58,
+      "functions": [
+        "build_session_identity",
+        "to_dict"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 69,
+      "markers": [],
+      "module": "src.etatmajor.core.session",
+      "path": "src/etatmajor/core/session.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
         "OrderSide",
         "OperatingMode",
         "OrderType",
@@ -373,7 +444,7 @@
         "PortfolioSnapshot",
         "Portfolio"
       ],
-      "code_lines": 144,
+      "code_lines": 190,
       "functions": [
         "open_positions",
         "__init__",
@@ -386,11 +457,13 @@
         "equity",
         "net_pnl",
         "snapshot",
+        "account_state",
+        "portfolio_state",
         "to_dict"
       ],
       "has_docstring": true,
       "internal_imports": [],
-      "lines": 172,
+      "lines": 220,
       "markers": [],
       "module": "src.etatmajor.execution.accounting",
       "path": "src/etatmajor/execution/accounting.py",
@@ -400,7 +473,7 @@
       "classes": [
         "SimulatedBroker"
       ],
-      "code_lines": 190,
+      "code_lines": 220,
       "functions": [
         "__init__",
         "_next_order_id",
@@ -414,11 +487,13 @@
         "execute_market",
         "_maybe_fill",
         "_market_price_from",
+        "result_for",
+        "execution_events",
         "open_orders"
       ],
       "has_docstring": true,
       "internal_imports": [],
-      "lines": 220,
+      "lines": 252,
       "markers": [],
       "module": "src.etatmajor.execution.broker",
       "path": "src/etatmajor/execution/broker.py",
@@ -441,7 +516,7 @@
         "ReplayResult",
         "ReplayEngine"
       ],
-      "code_lines": 516,
+      "code_lines": 544,
       "functions": [
         "__init__",
         "run",
@@ -457,7 +532,7 @@
       ],
       "has_docstring": true,
       "internal_imports": [],
-      "lines": 562,
+      "lines": 590,
       "markers": [],
       "module": "src.etatmajor.replay.engine",
       "path": "src/etatmajor/replay/engine.py",
@@ -477,17 +552,18 @@
     },
     {
       "classes": [],
-      "code_lines": 156,
+      "code_lines": 179,
       "functions": [
         "_reject_summary",
         "build_report",
+        "_market_context",
         "_fingerprint",
         "write_report",
         "render_summary"
       ],
       "has_docstring": true,
       "internal_imports": [],
-      "lines": 180,
+      "lines": 205,
       "markers": [],
       "module": "src.etatmajor.reporting.report",
       "path": "src/etatmajor/reporting/report.py",
@@ -511,18 +587,20 @@
         "RiskGovernor",
         "MinimalRiskGovernor"
       ],
-      "code_lines": 92,
+      "code_lines": 115,
       "functions": [
         "_reduces_existing_exposure",
         "notional",
         "to_dict",
         "authorize",
         "__init__",
-        "authorize"
+        "_record",
+        "authorize",
+        "_authorize"
       ],
       "has_docstring": true,
       "internal_imports": [],
-      "lines": 115,
+      "lines": 140,
       "markers": [],
       "module": "src.etatmajor.risk.governor",
       "path": "src/etatmajor/risk/governor.py",
@@ -590,6 +668,20 @@
       "markers": [],
       "module": "src.etatmajor.strategies.demo",
       "path": "src/etatmajor/strategies/demo.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 9,
+      "functions": [
+        "code_version"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 14,
+      "markers": [],
+      "module": "src.etatmajor.version",
+      "path": "src/etatmajor/version.py",
       "stub_functions": []
     },
     {
@@ -797,6 +889,30 @@
     },
     {
       "classes": [],
+      "code_lines": 130,
+      "functions": [
+        "module_files",
+        "layer_of",
+        "imported_modules",
+        "test_the_package_is_not_empty",
+        "test_every_module_has_a_docstring",
+        "test_no_module_imports_a_forbidden_library",
+        "test_no_module_imports_a_higher_layer",
+        "test_no_circular_dependency",
+        "test_the_layer_order_is_the_documented_one",
+        "test_core_does_not_depend_on_any_other_layer",
+        "visit"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 165,
+      "markers": [],
+      "module": "tests.unit.test_architecture",
+      "path": "tests/unit/test_architecture.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
       "code_lines": 139,
       "functions": [
         "make_order",
@@ -898,6 +1014,45 @@
       "markers": [],
       "module": "tests.unit.test_config",
       "path": "tests/unit/test_config.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 184,
+      "functions": [
+        "make_plan",
+        "test_a_complete_plan_is_accepted",
+        "test_a_plan_without_invalidation_is_refused",
+        "test_a_plan_without_positive_risk_is_refused",
+        "test_a_long_plan_requires_the_stop_below_the_entry",
+        "test_a_short_plan_requires_the_stop_above_the_entry",
+        "test_a_long_target_must_be_above_the_entry",
+        "test_the_reward_risk_ratio_accounts_for_the_costs",
+        "test_an_expired_plan_is_detected",
+        "test_an_intention_carries_the_plan_without_the_risk_limits",
+        "test_a_fresh_snapshot_authorises_a_decision",
+        "test_a_stale_snapshot_blocks_a_decision",
+        "test_a_snapshot_of_unknown_quality_is_never_fresh",
+        "test_an_inverted_quote_is_refused",
+        "test_an_order_result_exposes_its_outcome",
+        "test_an_execution_event_is_serialisable",
+        "test_an_audit_event_is_serialisable",
+        "test_the_account_state_exposes_the_drawdown",
+        "test_the_portfolio_state_counts_open_positions",
+        "test_only_passed_and_failed_are_conclusive",
+        "test_the_session_identity_is_deterministic",
+        "test_the_session_identity_changes_with_its_inputs"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.core.models",
+        "etatmajor.core.session",
+        "etatmajor.core.types"
+      ],
+      "lines": 240,
+      "markers": [],
+      "module": "tests.unit.test_core_models",
+      "path": "tests/unit/test_core_models.py",
       "stub_functions": []
     },
     {
@@ -1030,7 +1185,7 @@
     }
   ],
   "files_without_docstring": [],
-  "generated_at": "2026-10-22T14:20:12.628590+00:00",
+  "generated_at": "2026-10-22T14:32:09.887885+00:00",
   "import_graph": {
     "scripts.audit_inventory": [],
     "scripts.benchmark_replay": [
@@ -1050,6 +1205,8 @@
     "src.etatmajor.core.errors": [],
     "src.etatmajor.core.events": [],
     "src.etatmajor.core.journal": [],
+    "src.etatmajor.core.models": [],
+    "src.etatmajor.core.session": [],
     "src.etatmajor.core.types": [],
     "src.etatmajor.data": [],
     "src.etatmajor.data.loader": [],
@@ -1067,6 +1224,7 @@
     "src.etatmajor.strategies": [],
     "src.etatmajor.strategies.base": [],
     "src.etatmajor.strategies.demo": [],
+    "src.etatmajor.version": [],
     "tests.acceptance.test_cli": [
       "etatmajor.core.config",
       "etatmajor.data.loader",
@@ -1112,6 +1270,7 @@
       "etatmajor.core.types",
       "etatmajor.execution.accounting"
     ],
+    "tests.unit.test_architecture": [],
     "tests.unit.test_broker": [
       "etatmajor.core.config",
       "etatmajor.core.events",
@@ -1126,6 +1285,11 @@
     "tests.unit.test_config": [
       "etatmajor.core.config",
       "etatmajor.core.errors",
+      "etatmajor.core.types"
+    ],
+    "tests.unit.test_core_models": [
+      "etatmajor.core.models",
+      "etatmajor.core.session",
       "etatmajor.core.types"
     ],
     "tests.unit.test_loader_validation": [
@@ -1152,9 +1316,9 @@
       "etatmajor.strategies.base"
     ]
   },
-  "python_files": 44,
+  "python_files": 49,
   "stub_functions": [],
-  "total_code_lines": 4546,
-  "total_lines": 5536,
+  "total_code_lines": 5359,
+  "total_lines": 6534,
   "unreferenced_symbols": []
 }

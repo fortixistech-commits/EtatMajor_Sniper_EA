@@ -24,6 +24,7 @@ import random
 
 from ..core.config import ExecutionConfig
 from ..core.events import Fill, Order
+from ..core.models import ExecutionEvent, OrderResult
 from ..core.types import OrderSide, OrderStatus, OrderType
 from ..data.models import Bar
 
@@ -212,6 +213,37 @@ class SimulatedBroker:
         return base - half_spread - slippage
 
     # -- introspection -------------------------------------------------
+    def result_for(self, order: Order) -> OrderResult:
+        """Resultat normalise d'un ordre (contrat commun avec un broker reel)."""
+        return OrderResult(
+            order_id=order.order_id,
+            client_order_id=order.client_order_id,
+            symbol=order.symbol,
+            status=order.status,
+            ts_ns=order.updated_ts_ns,
+            reason=order.reason,
+            filled_quantity=order.filled_quantity,
+            average_price=order.average_fill_price,
+            commission=order.commission,
+        )
+
+    def execution_events(self) -> list[ExecutionEvent]:
+        """Evenements d'execution types (fills) produits par le broker."""
+        return [
+            ExecutionEvent(
+                ts_ns=fill.ts_ns,
+                kind="FILL",
+                symbol=fill.symbol,
+                order_id=fill.order_id,
+                side=fill.side,
+                quantity=fill.quantity,
+                price=fill.price,
+                commission=fill.commission,
+                liquidity=fill.liquidity,
+            )
+            for fill in self.fills
+        ]
+
     def open_orders(self) -> list[Order]:
         return [
             o

@@ -18,6 +18,7 @@ from ..core.clock import ns_to_iso
 from ..core.config import AppConfig
 from ..core.journal import Journal
 from ..core.types import OrderStatus
+from ..core.models import MarketTick
 from ..data.loader import Dataset
 from ..execution.accounting import Portfolio
 from ..execution.broker import SimulatedBroker
@@ -41,6 +42,7 @@ def build_report(
     risk_rejections: list[dict],
     broker_rejections: list[dict],
     journal: Journal,
+    session: dict | None = None,
 ) -> dict:
     """Assemble the report of a replay run."""
     snapshot = portfolio.snapshot()
@@ -58,6 +60,7 @@ def build_report(
     report: dict[str, Any] = {
         "schema_version": "1.0",
         "project": "ETAT-MAJOR SNIPER EA",
+        "session": session or {},
         "phase": "2",
         "mode": config.simulation.mode.report_label,
         "simulation_only": True,
@@ -112,6 +115,7 @@ def build_report(
             "risk_count": len(risk_rejections),
             "broker_count": len(broker_rejections),
         },
+        "market": _market_context(dataset, config),
         "end_of_replay_policy": config.simulation.end_of_replay_policy.value,
         "config": config.to_dict(),
         "config_fingerprint": config.fingerprint(),
@@ -121,6 +125,27 @@ def build_report(
 
     report["report_fingerprint"] = _fingerprint(report)
     return report
+
+
+def _market_context(dataset: Dataset, config: AppConfig) -> dict:
+    """Contexte d'execution de la fin de campagne (bid/ask/mid de reference)."""
+    if not dataset.bars:
+        return {}
+    last = dataset.bars[-1]
+    half_spread = config.execution.spread_price / 2.0
+    tick = MarketTick(
+        symbol=dataset.symbol,
+        ts_ns=last.ts_close_ns,
+        bid=round(last.close - half_spread, 10),
+        ask=round(last.close + half_spread, 10),
+    )
+    return {
+        "last_ts_ns": last.ts_close_ns,
+        "bid": tick.bid,
+        "ask": tick.ask,
+        "mid": round(tick.mid, 10),
+        "spread": round(tick.spread, 10),
+    }
 
 
 def _fingerprint(report: dict) -> str:
