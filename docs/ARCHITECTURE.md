@@ -158,6 +158,48 @@ Seule exception documentée : la fermeture de fin de replay, qui est une
 **réduction** d'exposition et non une nouvelle entrée ; elle n'est pas
 soumise au governor mais sa politique est explicite et journalisée.
 
+## 6 bis. Challenge Engine et profil de challenge
+
+Le challenge est une **donnee versionnee** (`configs/prop_firms/*.toml`), jamais
+du code. Le profil porte le programme, la variante, la version, la date de
+verification, les sources officielles, les etapes, les limites, et la liste
+explicite des regles non verifiees.
+
+```text
+ChallengeEngine.observe(ts, account_state)   -> suivi quotidien, total, etapes
+ChallengeEngine.evaluate()                   -> ChallengeVerdict
+```
+
+Le verdict contient : l'etat officiel, l'etat indicatif, les raisons, les
+hypotheses employees, les distances aux limites, et **une ligne par
+interpretation** des regles ambigues.
+
+Regles de fonctionnement :
+
+* un profil non verifiable (`DRAFT`) produit `INVALID` : **aucune campagne ne
+  peut etre declaree conforme**, mais la simulation continue et l'etat
+  indicatif est fourni ;
+* une regle ambigue est evaluee sous toutes ses interpretations ; le verdict
+  le plus defavorable l'emporte ; `PASSED` exige que toutes passent ;
+* un challenge rate (officiel ou indicatif) bloque toute nouvelle exposition
+  cote RiskGovernor ;
+* la simulation d'un challenge se fait sur le **capital du challenge**.
+
+## 6 ter. Garde-fous du RiskGovernor
+
+```text
+kill switch persistant   -> refus total, survit au redemarrage, fail-safe
+regle de challenge       -> veto si le challenge est rate ou les limites sont atteintes
+risque par operation     -> quantite x |entree - stop| <= max_risk_per_trade
+stop obligatoire         -> refus si le profil l'exige et que le stop est absent
+exposition               -> notionnel <= max_leverage x equity
+taille / notionnel / positions ouvertes
+audit                   -> chaque decision (autorisation ou refus) est conservee
+```
+
+Aucun chemin ne permet de soumettre un ordre sans decision favorable : le
+moteur passe systematiquement par `RiskGovernor.authorize`.
+
 ## 7. Fin de replay
 
 Politique `CLOSE_AT_LAST_PRICE` (défaut) :
