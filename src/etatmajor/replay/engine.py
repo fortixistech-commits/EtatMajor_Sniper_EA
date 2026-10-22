@@ -324,18 +324,26 @@ class ReplayEngine:
             return
 
         side = OrderSide.BUY if signal.action is SignalAction.BUY else OrderSide.SELL
-        reference_price = (
-            signal.limit_price
-            if signal.limit_price is not None
-            else signal.stop_price
-            if signal.stop_price is not None
-            else bar.close
-        )
+        # Ordre au marche : la reference de risque est le dernier prix connu
+        # (cloture de la bougie), jamais le stop de protection ; sinon le
+        # risque calcule serait nul et le gouverneur ne pourrait plus vetoter.
+        if signal.order_type is OrderType.MARKET or (
+            signal.limit_price is None and signal.stop_price is None
+        ):
+            risk_reference = bar.close
+        else:
+            risk_reference = (
+                signal.limit_price
+                if signal.limit_price is not None
+                else signal.stop_price
+                if signal.stop_price is not None
+                else bar.close
+            )
         request = OrderRequest(
             symbol=signal.symbol,
             side=side,
             quantity=signal.quantity,
-            reference_price=float(reference_price),
+            reference_price=float(risk_reference),
             stop_price=signal.stop_price,
         )
         decision = self.risk_governor.authorize(

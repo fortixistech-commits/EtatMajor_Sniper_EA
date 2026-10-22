@@ -5,6 +5,7 @@
     "DataValidationError",
     "EtatMajorError",
     "ExecutionError",
+    "PlanningError",
     "StrategyError"
   ],
   "exceptions_never_raised": [],
@@ -299,7 +300,7 @@
         "Position",
         "JournalEntry"
       ],
-      "code_lines": 119,
+      "code_lines": 122,
       "functions": [
         "to_dict",
         "to_dict",
@@ -312,7 +313,7 @@
       ],
       "has_docstring": true,
       "internal_imports": [],
-      "lines": 150,
+      "lines": 153,
       "markers": [],
       "module": "src.etatmajor.core.events",
       "path": "src/etatmajor/core/events.py",
@@ -595,7 +596,7 @@
         "ReplayResult",
         "ReplayEngine"
       ],
-      "code_lines": 557,
+      "code_lines": 562,
       "functions": [
         "__init__",
         "run",
@@ -611,7 +612,7 @@
       ],
       "has_docstring": true,
       "internal_imports": [],
-      "lines": 604,
+      "lines": 612,
       "markers": [],
       "module": "src.etatmajor.replay.engine",
       "path": "src/etatmajor/replay/engine.py",
@@ -709,6 +710,137 @@
       "markers": [],
       "module": "src.etatmajor.risk.killswitch",
       "path": "src/etatmajor/risk/killswitch.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
+      "code_lines": 11,
+      "functions": [],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 14,
+      "markers": [],
+      "module": "src.etatmajor.sniper",
+      "path": "src/etatmajor/sniper/__init__.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "ContextDecision",
+        "ContextFilter"
+      ],
+      "code_lines": 90,
+      "functions": [
+        "session_of",
+        "to_dict",
+        "__init__",
+        "evaluate"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 107,
+      "markers": [],
+      "module": "src.etatmajor.sniper.context",
+      "path": "src/etatmajor/sniper/context.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "SniperDecision",
+        "SniperEngine"
+      ],
+      "code_lines": 145,
+      "functions": [
+        "to_dict",
+        "__init__",
+        "evaluate",
+        "_synthetic_snapshot"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 168,
+      "markers": [],
+      "module": "src.etatmajor.sniper.engine",
+      "path": "src/etatmajor/sniper/engine.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "PlanningError",
+        "MissionPlanner"
+      ],
+      "code_lines": 80,
+      "functions": [
+        "plan"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 94,
+      "markers": [],
+      "module": "src.etatmajor.sniper.planner",
+      "path": "src/etatmajor/sniper/planner.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "MarketRegime",
+        "VolatilityState",
+        "RegimeSnapshot",
+        "RegimeDetector"
+      ],
+      "code_lines": 168,
+      "functions": [
+        "ema",
+        "atr",
+        "is_trending",
+        "to_dict",
+        "__init__",
+        "evaluate"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 202,
+      "markers": [],
+      "module": "src.etatmajor.sniper.regime",
+      "path": "src/etatmajor/sniper/regime.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "SetupDetection",
+        "PullbackSetupDetector"
+      ],
+      "code_lines": 121,
+      "functions": [
+        "to_dict",
+        "__init__",
+        "detect"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 146,
+      "markers": [],
+      "module": "src.etatmajor.sniper.setup",
+      "path": "src/etatmajor/sniper/setup.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [
+        "SniperStrategy"
+      ],
+      "code_lines": 61,
+      "functions": [
+        "__init__",
+        "on_start",
+        "on_bar",
+        "on_stop"
+      ],
+      "has_docstring": true,
+      "internal_imports": [],
+      "lines": 73,
+      "markers": [],
+      "module": "src.etatmajor.sniper.strategy",
+      "path": "src/etatmajor/sniper/strategy.py",
       "stub_functions": []
     },
     {
@@ -994,6 +1126,35 @@
     },
     {
       "classes": [],
+      "code_lines": 110,
+      "functions": [
+        "make_london_dataset",
+        "trending_with_pullback",
+        "build",
+        "test_a_ranging_series_produces_no_order_at_all",
+        "test_the_abstentions_are_explained",
+        "test_a_trending_series_can_produce_a_signal",
+        "test_every_signal_carries_a_complete_mission_plan",
+        "test_the_risk_governor_can_refuse_the_sniper"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.core.types",
+        "etatmajor.data.models",
+        "etatmajor.replay.engine",
+        "etatmajor.sniper.planner",
+        "etatmajor.sniper.regime",
+        "etatmajor.sniper.strategy",
+        "tests.conftest"
+      ],
+      "lines": 142,
+      "markers": [],
+      "module": "tests.integration.test_sniper_integration",
+      "path": "tests/integration/test_sniper_integration.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
       "code_lines": 100,
       "functions": [
         "make_fill",
@@ -1021,7 +1182,7 @@
     },
     {
       "classes": [],
-      "code_lines": 132,
+      "code_lines": 134,
       "functions": [
         "module_files",
         "layer_of",
@@ -1037,7 +1198,7 @@
       ],
       "has_docstring": true,
       "internal_imports": [],
-      "lines": 167,
+      "lines": 169,
       "markers": [],
       "module": "tests.unit.test_architecture",
       "path": "tests/unit/test_architecture.py",
@@ -1349,6 +1510,54 @@
     },
     {
       "classes": [],
+      "code_lines": 257,
+      "functions": [
+        "make_bar",
+        "trending_bars",
+        "ranging_bars",
+        "context_for",
+        "test_a_rising_series_is_classified_as_an_uptrend",
+        "test_a_flat_series_is_classified_as_a_range",
+        "test_too_few_bars_leave_the_regime_undefined",
+        "test_the_volatility_state_is_reported",
+        "test_the_regime_only_uses_visible_bars",
+        "test_the_session_is_derived_from_the_timestamp",
+        "test_a_stale_market_blocks_the_decision",
+        "test_a_wide_spread_blocks_the_decision",
+        "test_an_authorised_session_and_a_normal_spread_are_accepted",
+        "test_the_quantity_is_derived_from_the_risk_and_the_stop_distance",
+        "test_a_risk_too_small_for_the_stop_is_refused",
+        "test_the_engine_abstains_when_there_is_no_trend",
+        "test_the_engine_abstains_without_enough_bars",
+        "test_the_engine_produces_a_complete_mission_plan_when_the_setup_is_valid",
+        "test_the_strategy_emits_nothing_when_the_engine_abstains",
+        "test_the_strategy_records_the_reasons_of_the_abstention"
+      ],
+      "has_docstring": true,
+      "internal_imports": [
+        "etatmajor.core.clock",
+        "etatmajor.core.events",
+        "etatmajor.core.models",
+        "etatmajor.core.types",
+        "etatmajor.data.models",
+        "etatmajor.execution.accounting",
+        "etatmajor.sniper.context",
+        "etatmajor.sniper.engine",
+        "etatmajor.sniper.planner",
+        "etatmajor.sniper.regime",
+        "etatmajor.sniper.setup",
+        "etatmajor.sniper.strategy",
+        "etatmajor.strategies.base",
+        "tests.conftest"
+      ],
+      "lines": 319,
+      "markers": [],
+      "module": "tests.unit.test_sniper_doctrine",
+      "path": "tests/unit/test_sniper_doctrine.py",
+      "stub_functions": []
+    },
+    {
+      "classes": [],
       "code_lines": 83,
       "functions": [
         "make_bars",
@@ -1390,7 +1599,7 @@
     }
   ],
   "files_without_docstring": [],
-  "generated_at": "2026-10-22T14:55:45.872147+00:00",
+  "generated_at": "2026-10-22T16:18:50.351733+00:00",
   "import_graph": {
     "scripts.audit_inventory": [],
     "scripts.benchmark_replay": [
@@ -1430,6 +1639,13 @@
     "src.etatmajor.risk": [],
     "src.etatmajor.risk.governor": [],
     "src.etatmajor.risk.killswitch": [],
+    "src.etatmajor.sniper": [],
+    "src.etatmajor.sniper.context": [],
+    "src.etatmajor.sniper.engine": [],
+    "src.etatmajor.sniper.planner": [],
+    "src.etatmajor.sniper.regime": [],
+    "src.etatmajor.sniper.setup": [],
+    "src.etatmajor.sniper.strategy": [],
     "src.etatmajor.strategies": [],
     "src.etatmajor.strategies.base": [],
     "src.etatmajor.strategies.demo": [],
@@ -1480,6 +1696,15 @@
       "etatmajor.data.loader",
       "etatmajor.replay.engine",
       "etatmajor.strategies.demo",
+      "tests.conftest"
+    ],
+    "tests.integration.test_sniper_integration": [
+      "etatmajor.core.types",
+      "etatmajor.data.models",
+      "etatmajor.replay.engine",
+      "etatmajor.sniper.planner",
+      "etatmajor.sniper.regime",
+      "etatmajor.sniper.strategy",
       "tests.conftest"
     ],
     "tests.unit.test_accounting": [
@@ -1542,14 +1767,30 @@
       "etatmajor.risk.governor",
       "etatmajor.risk.killswitch"
     ],
+    "tests.unit.test_sniper_doctrine": [
+      "etatmajor.core.clock",
+      "etatmajor.core.events",
+      "etatmajor.core.models",
+      "etatmajor.core.types",
+      "etatmajor.data.models",
+      "etatmajor.execution.accounting",
+      "etatmajor.sniper.context",
+      "etatmajor.sniper.engine",
+      "etatmajor.sniper.planner",
+      "etatmajor.sniper.regime",
+      "etatmajor.sniper.setup",
+      "etatmajor.sniper.strategy",
+      "etatmajor.strategies.base",
+      "tests.conftest"
+    ],
     "tests.unit.test_visible_bars": [
       "etatmajor.data.models",
       "etatmajor.strategies.base"
     ]
   },
-  "python_files": 56,
+  "python_files": 65,
   "stub_functions": [],
-  "total_code_lines": 6700,
-  "total_lines": 8135,
+  "total_code_lines": 7753,
+  "total_lines": 9413,
   "unreferenced_symbols": []
 }

@@ -29,6 +29,7 @@ LAYERS = [
     "risk",
     "challenge",
     "strategies",
+    "sniper",
     "replay",
     "reporting",
     "cli",
@@ -152,7 +153,8 @@ def test_the_layer_order_is_the_documented_one():
     assert LAYERS.index("execution") < LAYERS.index("risk")
     assert LAYERS.index("risk") < LAYERS.index("challenge")
     assert LAYERS.index("challenge") < LAYERS.index("strategies")
-    assert LAYERS.index("strategies") < LAYERS.index("replay")
+    assert LAYERS.index("strategies") < LAYERS.index("sniper")
+    assert LAYERS.index("sniper") < LAYERS.index("replay")
     assert LAYERS.index("replay") < LAYERS.index("reporting")
     assert LAYERS.index("reporting") < LAYERS.index("cli")
 

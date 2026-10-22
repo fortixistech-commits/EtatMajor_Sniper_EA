@@ -497,7 +497,7 @@ Le détail est dans `docs/audit/BACKLOG.md`. Ordre proposé :
 | C5 | Catalogue d'instruments et registre de provenance des données (Mission 3) | prérequis de la Porte G4 | M |
 | C6 | Challenge Engine + profil The5ers High Stakes 2 500 USD (Mission 7) | cœur de la mission | L |
 | C7 | RiskGovernor conscient du challenge (Mission 5) | Porte G2 | L |
-| C8 | Sniper Engine et détecteur de régime (Mission 6) | stratégie | L |
+| C8 | Sniper Engine et détecteur de régime (Mission 6) | stratégie | ✅ livré |
 | C9 | Performance Lab : métriques, walk-forward, Monte-Carlo (Mission 12) | preuve de robustesse | L |
 
 **C1, C2 et C3 ne créent aucune nouvelle capacité stratégique** : ce sont des
