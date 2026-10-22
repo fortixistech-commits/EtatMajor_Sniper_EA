@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from .models import MissionPlan
 from .types import OrderSide, OrderStatus, OrderType, SignalAction
 
 
@@ -34,12 +35,14 @@ class Signal:
     reason: str = ""
     data_refs: tuple[str, ...] = ()
     expires_ts_ns: int | None = None
+    plan: MissionPlan | None = None
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
         payload["action"] = self.action.value
         payload["order_type"] = self.order_type.value
         payload["data_refs"] = list(self.data_refs)
+        payload["plan"] = self.plan.to_dict() if self.plan is not None else None
         return payload
 
 

@@ -497,7 +497,7 @@ Le détail est dans `docs/audit/BACKLOG.md`. Ordre proposé :
 | C5 | Catalogue d'instruments et registre de provenance des données (Mission 3) | prérequis de la Porte G4 | M |
 | C6 | Challenge Engine + profil The5ers High Stakes 2 500 USD (Mission 7) | cœur de la mission | L |
 | C7 | RiskGovernor conscient du challenge (Mission 5) | Porte G2 | L |
-| C8 | Sniper Engine et détecteur de régime (Mission 6) | stratégie | L |
+| C8 | Sniper Engine et détecteur de régime (Mission 6) | stratégie | ✅ livré |
 | C9 | Performance Lab : métriques, walk-forward, Monte-Carlo (Mission 12) | preuve de robustesse | L |
 
 **C1, C2 et C3 ne créent aucune nouvelle capacité stratégique** : ce sont des
@@ -519,11 +519,16 @@ corrections du socle existant, prerequisites à toute affirmation de fiabilité.
 | AUDIT-D8 — fingerprint recalculé 3 fois | **corrigé** | C3 | cache dans `Dataset` |
 | AUDIT-D9 — détection de trous approximative | ouvert | C5 | — |
 | AUDIT-D10 — pas de catalogue d'instruments | ouvert | C5 | — |
-| AUDIT-D11 — socle challenge absent | **partiellement corrigé** | C4 (modèles `ChallengeState`, `MissionPlan`, `TradeIntent`, `AccountState`, `PortfolioState`, `MarketSnapshot`, `OrderResult`, `ExecutionEvent`, `AuditEvent` + identifiant de session + test d'architecture) ; C6 (moteur) reste ouvert | `tests/unit/test_architecture.py`, `tests/unit/test_core_models.py` |
-| AUDIT-D12 — RiskGovernor sans conscience du challenge | ouvert | C7 | — |
+| AUDIT-D11 — socle challenge absent | **corrigé** | C4 (modèles et test d'architecture) + C6 (`challenge.profile`, `challenge.engine`, profil The5ers interprete) | `tests/unit/test_challenge_engine.py`, `tests/integration/test_challenge_integration.py` |
+| AUDIT-D12 — RiskGovernor sans conscience du challenge | **corrigé** | C7 (veto du challenge, risque par operation, stop obligatoire, exposition plafonnee, kill switch persistant, journal d'audit) | `tests/unit/test_risk_guardrails.py` |
 
 Rapports de livraison : `docs/audit/PHASE_A_REPORT.md` (C1→C3),
-`docs/audit/PHASE_B_REPORT.md` (C4).
+`docs/audit/PHASE_B_REPORT.md` (C4), `docs/audit/PHASE_C_REPORT.md` (C6, C7).
+
+| Defaut | Statut | Correction | Preuve |
+| --- | --- | --- | --- |
+| AUDIT-D9 — detection de trous approximative | ouvert | C5 | — |
+| AUDIT-D10 — pas de catalogue d'instruments | ouvert | C5 | — |
 
 ## 11. Décision proposée
 

@@ -31,6 +31,7 @@ from ..data.loader import Dataset
 from ..execution.accounting import Portfolio
 from ..execution.broker import SimulatedBroker
 from ..risk.governor import MinimalRiskGovernor, OrderRequest, RiskGovernor
+from ..challenge.engine import ChallengeEngine
 from ..strategies.base import Strategy, StrategyContext, VisibleBars
 from ..version import code_version
 
@@ -60,6 +61,7 @@ class ReplayEngine:
         risk_governor: RiskGovernor | None = None,
         broker: SimulatedBroker | None = None,
         journal: Journal | None = None,
+        challenge: "ChallengeEngine | None" = None,
     ) -> None:
         config.validate()
         if not dataset.bars:
@@ -68,7 +70,10 @@ class ReplayEngine:
         self.dataset = dataset
         self.config = config
         self.strategy = strategy
-        self.risk_governor = risk_governor or MinimalRiskGovernor(config.risk)
+        self.challenge = challenge
+        self.risk_governor = risk_governor or MinimalRiskGovernor(
+            config.risk, challenge=challenge
+        )
         self.broker = broker or SimulatedBroker(
             config.execution, seed=config.simulation.seed
         )
@@ -122,6 +127,8 @@ class ReplayEngine:
             self._process_bar_close(index, bar)
 
         self._finish_replay()
+        if self.challenge is not None:
+            self.challenge.finalize()
         self._call_on_stop(bars)
         return self._build_result()
 
@@ -282,6 +289,11 @@ class ReplayEngine:
                 f"contract in on_bar: {exc}"
             ) from exc
 
+        if self.challenge is not None:
+            self.challenge.observe(
+                self.clock.now(), self.portfolio.account_state(self.clock.now())
+            )
+
         for signal in signals:
             self._handle_signal(signal, bar, index)
 
@@ -312,18 +324,27 @@ class ReplayEngine:
             return
 
         side = OrderSide.BUY if signal.action is SignalAction.BUY else OrderSide.SELL
-        reference_price = (
-            signal.limit_price
-            if signal.limit_price is not None
-            else signal.stop_price
-            if signal.stop_price is not None
-            else bar.close
-        )
+        # Ordre au marche : la reference de risque est le dernier prix connu
+        # (cloture de la bougie), jamais le stop de protection ; sinon le
+        # risque calcule serait nul et le gouverneur ne pourrait plus vetoter.
+        if signal.order_type is OrderType.MARKET or (
+            signal.limit_price is None and signal.stop_price is None
+        ):
+            risk_reference = bar.close
+        else:
+            risk_reference = (
+                signal.limit_price
+                if signal.limit_price is not None
+                else signal.stop_price
+                if signal.stop_price is not None
+                else bar.close
+            )
         request = OrderRequest(
             symbol=signal.symbol,
             side=side,
             quantity=signal.quantity,
-            reference_price=float(reference_price),
+            reference_price=float(risk_reference),
+            stop_price=signal.stop_price,
         )
         decision = self.risk_governor.authorize(
             request, self.portfolio.snapshot(), ts_ns=self.clock.now()
@@ -577,6 +598,7 @@ class ReplayEngine:
             broker_rejections=self.broker_rejections,
             journal=self.journal,
             session=self.session.to_dict() if self.session else None,
+            challenge=self.challenge,
         )
         return ReplayResult(
             report=report,

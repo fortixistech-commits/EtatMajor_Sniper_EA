@@ -30,6 +30,7 @@ class DemoLifecycleStrategy:
         exit_index: int = 5,
         place_pending_limit: bool = False,
         pending_limit_offset: float = 0.50,
+        stop_distance: float = 0.0010,
     ) -> None:
         self.symbol = symbol
         self.timeframe = timeframe
@@ -38,6 +39,7 @@ class DemoLifecycleStrategy:
         self.exit_index = exit_index
         self.place_pending_limit = place_pending_limit
         self.pending_limit_offset = pending_limit_offset
+        self.stop_distance = stop_distance
 
     # -- lifecycle ----------------------------------------------------
     def on_start(self, context: StrategyContext) -> None:
@@ -73,6 +75,7 @@ class DemoLifecycleStrategy:
                     action=SignalAction.BUY,
                     order_type=OrderType.MARKET,
                     reason="demo: scheduled market entry",
+                    stop_price=round(context.bar.close - self.stop_distance, 10),
                 )
             )
             self.entry_sent = True
@@ -84,6 +87,7 @@ class DemoLifecycleStrategy:
                     action=SignalAction.SELL,
                     order_type=OrderType.MARKET,
                     reason="demo: scheduled market exit",
+                    stop_price=round(context.bar.close + self.stop_distance, 10),
                 )
             )
             self.exit_sent = True
@@ -101,6 +105,7 @@ class DemoLifecycleStrategy:
         order_type: OrderType,
         reason: str,
         limit_price: float | None = None,
+        stop_price: float | None = None,
     ) -> Signal:
         return Signal(
             strategy_id=self.strategy_id,
@@ -112,6 +117,7 @@ class DemoLifecycleStrategy:
             quantity=self.quantity,
             order_type=order_type,
             limit_price=limit_price,
+            stop_price=stop_price,
             reason=reason,
             # Provenance de la decision : la bougie courante et les trois
             # dernieres bougies visibles. La stratgie de demonstration
