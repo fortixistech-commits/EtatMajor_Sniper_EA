@@ -33,12 +33,15 @@ trap 'rm -f "$ASKPASS"' EXIT
 cat > "$ASKPASS" <<'EOF'
 #!/bin/sh
 case "$1" in
-  *sername*) printf '%s\n' "x-access-token" ;;
+  *sername*) printf '%s\n' "${GITHUB_USERNAME:-x-access-token}" ;;
   *assword*) printf '%s\n' "$GITHUB_TOKEN" ;;
   *) printf '%s\n' "" ;;
 esac
 EOF
 chmod 700 "$ASKPASS"
+
+export GIT_ASKPASS="$ASKPASS"
+export GIT_TERMINAL_PROMPT=0
 
 echo "==> remote   : $REMOTE"
 echo "==> branches : $BRANCHES"
