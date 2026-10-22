@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install the project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Validate the sample dataset
+        run: |
+          python -m etatmajor.cli validate \
+            --data data/sample_eurusd_1m.csv \
+            --config configs/simulation.toml
+
+      - name: Run the test suite
+        run: python -m pytest -q
+
+      - name: Replay the sample dataset (reproducibility check)
+        run: |
+          python -m etatmajor.cli replay \
+            --data data/sample_eurusd_1m.csv \
+            --config configs/simulation.toml \
+            --report artifacts/ci_report.json \
+            --journal artifacts/ci_journal.jsonl
+
+      - name: Check the report is identical to the committed reference
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          committed = json.loads(Path("artifacts/example_report.json").read_text())
+          produced = json.loads(Path("artifacts/ci_report.json").read_text())
+          assert committed["account"] == produced["account"], "replay is not reproducible"
+          assert committed["report_fingerprint"] == produced["report_fingerprint"]
+          print("reproducible:", produced["report_fingerprint"])
+          PY
