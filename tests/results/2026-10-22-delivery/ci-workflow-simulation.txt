@@ -1,0 +1,36 @@
+=== simulation locale du workflow CI (etapes identiques) ===
+--- 1. installation ---
+installation OK
+--- 2. validation du dataset ---
+{
+  "rows_read": 240,
+  "rows_accepted": 240,
+  "rows_rejected": 0,
+  "missing_bars": 0,
+  "duplicate_timestamps": 0,
+  "out_of_order_timestamps": 0,
+  "errors": [],
+  "warnings": [],
+  "ok": true
+}
+Dataset OK: 240 bar(s), fingerprint 5cd5acdd05a01369
+--- 3. suite de tests ---
+........................................................................ [ 69%]
+................................                                         [100%]
+104 passed in 4.84s
+--- 4. replay ---
+Final equity    : 100005.31 USD
+Realized PnL    : 6.71
+Unrealized PnL  : 0.00
+Net PnL         : 5.31
+--------------------------------------------------------------------
+Risk rejections : 0 {}
+Broker rejects  : 0 {}
+End of replay   : CLOSE_AT_LAST_PRICE
+Fingerprint     : 8a3fc89fee604aea
+====================================================================
+Reminder: these results come from a simulation. They are not a
+performance guarantee and must not be presented as such.
+--- 5. controle de reproductibilite ---
+reproducible: 8a3fc89fee604aea
+=== fin de la simulation CI ===
