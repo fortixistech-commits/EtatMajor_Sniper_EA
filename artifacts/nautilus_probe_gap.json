@@ -1,0 +1,72 @@
+{
+  "account": "MarginAccount(id=SIM-001, type=MARGIN, base=USD)",
+  "bars": 7,
+  "dataset": "gap.csv",
+  "engine": "nautilus_trader",
+  "events": [
+    {
+      "order_id": "O-20260105-000200-001-000-1",
+      "price": 1.1005,
+      "quantity": 25.0,
+      "ts_event": 1767571320000000000,
+      "type": "fill"
+    },
+    {
+      "position_id": "EURUSD.SIM-ProbeStrategy-000",
+      "quantity": 25.0,
+      "ts_event": 1767571320000000000,
+      "type": "position_opened"
+    },
+    {
+      "order_id": "O-20260105-000200-001-000-1",
+      "price": 1.10051,
+      "quantity": 9975.0,
+      "ts_event": 1767571320000000000,
+      "type": "fill"
+    },
+    {
+      "order_id": "O-20260105-000700-001-000-2",
+      "price": 1.1105,
+      "quantity": 25.0,
+      "ts_event": 1767571620000000000,
+      "type": "fill"
+    },
+    {
+      "order_id": "O-20260105-000700-001-000-2",
+      "price": 1.11049,
+      "quantity": 9975.0,
+      "ts_event": 1767571620000000000,
+      "type": "fill"
+    },
+    {
+      "position_id": "EURUSD.SIM-ProbeStrategy-000",
+      "ts_event": 1767571620000000000,
+      "type": "position_closed"
+    }
+  ],
+  "lookahead_check": {
+    "entry_fill_price": 1.1005,
+    "filled_at_next_bar_open": false,
+    "filled_at_signal_bar_close": true,
+    "next_bar_open": 1.11,
+    "signal_bar_close": 1.1005,
+    "signal_bar_index": 2
+  },
+  "note": "NautilusTrader fills a market order submitted during on_bar at the close of that same bar: look-ahead bias for close-based signals.",
+  "orders": [
+    {
+      "order_id": "O-20260105-000200-001-000-1",
+      "quantity": 10000.0,
+      "side": "BUY",
+      "status": "FILLED"
+    },
+    {
+      "order_id": "O-20260105-000700-001-000-2",
+      "quantity": 10000.0,
+      "side": "SELL",
+      "status": "FILLED"
+    }
+  ],
+  "orders_total": 2,
+  "version": "1.231.0"
+}
