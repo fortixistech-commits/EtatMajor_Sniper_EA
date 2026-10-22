@@ -255,29 +255,64 @@ Vérifications de valeurs (pas seulement « pas d'exception ») :
 
 ## 11. Note de livraison (Pull Request)
 
-La branche `feat/phase-2-replay-engine` est poussée sur
-`origin`. La Pull Request vers `main` est **préparée mais non fusionnée**,
-conformément à la procédure (audit du chef de projet requis).
+La branche `feat/phase-2-replay-engine` contient 9 commits au-dessus de
+`main` (qui porte le seul commit de fondation).
 
-La machine de build ne dispose pas de GitHub CLI (`gh`) ni de jeton
-`GITHUB_TOKEN`. Deux voies de livraison sont donc proposées au chef de
-projet :
+**Blocage matériel, à traiter par le chef de projet.** La machine de build ne
+dispose ni de GitHub CLI (`gh`), ni de cle SSH, ni de jeton `GITHUB_TOKEN`
+ni d'identifiants HTTPS. La commande `git push` echoue donc sur
+`could not read Username for 'https://github.com'` : **la branche n'a pas pu
+etre poussee et la Pull Request n'a pas pu etre ouverte depuis cette machine.**
+Ce blocage est signale explicitement plutot que simule.
 
-1. **via l'API GitHub** : fournir un jeton à portée limitée
-   (`repo:write` sur ce seul dépôt) et exécuter :
+**Voie 1 - transfert par bundle (aucun secret requis)**
 
-   ```bash
-   curl -X POST -H "Authorization: Bearer $GITHUB_TOKEN" \
-        -H "Accept: application/vnd.github+json" \
-        https://api.github.com/repos/fortixistech-commits/EtatMajor_Sniper_EA/pulls \
-        -d '{"title":"Phase 2 - deterministic replay engine","head":"feat/phase-2-replay-engine","base":"main","body":"..."}'
-   ```
+Le bundle contenant `main` et `feat/phase-2-replay-engine` est produit a la
+racine du depot :
 
-2. **via l'interface web** : ouvrir
-   <https://github.com/fortixistech-commits/EtatMajor_Sniper_EA/compare/main...feat/phase-2-replay-engine?expand=1>
-   et utiliser le corps de PR fourni en §12.
+```bash
+git bundle create ../EtatMajor_Sniper_EA_phase2.bundle \
+    main feat/phase-2-replay-engine
+```
 
-Le corps de PR est également disponible dans `docs/PR_DESCRIPTION.md`.
+Cote poste disposant des acces :
+
+```bash
+git clone EtatMajor_Sniper_EA_phase2.bundle EtatMajor_Sniper_EA
+cd EtatMajor_Sniper_EA
+git remote add origin https://github.com/fortixistech-commits/EtatMajor_Sniper_EA.git
+git push origin main feat/phase-2-replay-engine
+```
+
+**Voie 2 - push direct avec un jeton**
+
+```bash
+git remote set-url origin \
+  https://<USER>:<TOKEN>@github.com/fortixistech-commits/EtatMajor_Sniper_EA.git
+git push origin main feat/phase-2-replay-engine
+```
+
+**Voie 3 - ouverture de la Pull Request**
+
+* via l'API GitHub (jeton a portee limitee `repo:write` sur ce seul depot) :
+
+  ```bash
+  curl -X POST -H "Authorization: Bearer $GITHUB_TOKEN" \
+       -H "Accept: application/vnd.github+json" \
+       https://api.github.com/repos/fortixistech-commits/EtatMajor_Sniper_EA/pulls \
+       -d @docs/pr_request.json
+  ```
+
+  (`docs/pr_request.json` contient le titre, la base `main`, la branche
+  `feat/phase-2-replay-engine` et le corps de PR.)
+
+* via l'interface web :
+  <https://github.com/fortixistech-commits/EtatMajor_Sniper_EA/compare/main...feat/phase-2-replay-engine?expand=1>
+
+Le corps de PR est egalement disponible dans `docs/PR_DESCRIPTION.md`.
+
+**Dans tous les cas, la Pull Request ne doit pas etre fusionnee sans l'audit
+du chef de projet.**
 
 ## 12. Contenu proposé pour la Pull Request
 

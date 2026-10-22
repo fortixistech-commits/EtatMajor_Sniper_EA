@@ -70,7 +70,11 @@
 ## 6. Blocages
 
 * **Aucun blocage technique** pour les Phases 3 et 4.
-* **Livraison de la PR** : la machine ne dispose ni de GitHub CLI ni de jeton
-  d'API. La branche est poussée ; la Pull Request est préparée
-  (`docs/PR_DESCRIPTION.md`) et doit être ouverte par le chef de projet ou
-  via un jeton à portée limitée (procédure décrite en §11 du rapport de phase).
+* **Livraison de la PR** : la machine ne dispose ni de GitHub CLI, ni de clé
+  SSH, ni de jeton d'API. `git push` échoue sur
+  `could not read Username for 'https://github.com'`. La branche
+  `feat/phase-2-replay-engine` (9 commits au-dessus de `main`) est **locale**
+  et un bundle de transfert est produit (`git bundle create
+  ../EtatMajor_Sniper_EA_phase2.bundle main feat/phase-2-replay-engine`).
+  La procédure de push et d'ouverture de PR (3 voies) est décrite en §11 du
+  rapport de phase.
