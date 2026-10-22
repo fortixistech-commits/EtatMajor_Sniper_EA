@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "etatmajor-sniper-ea"
+version = "0.2.0"
+description = "ETAT-MAJOR SNIPER EA - market simulation laboratory, strategy evaluation and execution platform"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "Fortixis Tech" }]
+keywords = ["trading", "simulation", "backtesting", "risk", "mql5", "mt5"]
+
+# Core replay engine has zero runtime dependency on purpose (stdlib only).
+dependencies = []
+
+[project.optional-dependencies]
+# Candidate simulation engine evaluated in Phase 2 (see docs/ARCHITECTURE_DECISIONS.md).
+nautilus = ["nautilus_trader==1.231.0"]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+etatmajor = "etatmajor.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "acceptance: end-to-end acceptance scenarios",
+    "integration: tests crossing multiple components",
+]

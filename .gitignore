@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local configuration and secrets (never commit)
+.env
+*.local.toml
+secrets/
+*.key
+*.pem
+
+# Simulation artifacts (regenerate with scripts/run_replay.sh)
+artifacts/*
+!artifacts/.gitkeep
+artifacts/**/*.json
+!artifacts/example_report.json
+!artifacts/example_journal.jsonl
+!artifacts/nautilus_probe.json
+!artifacts/nautilus_probe_gap.json
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store

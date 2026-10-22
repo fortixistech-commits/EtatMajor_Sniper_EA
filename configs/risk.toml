@@ -1,0 +1,14 @@
+# ETAT-MAJOR SNIPER EA - reference risk configuration
+#
+# Phase 2 implements the risk *contract* and a minimal governor. The advanced
+# limits (daily loss, global drawdown, correlated exposure, prop firm
+# challenge profiles) belong to Phase 5 and are not enabled here.
+#
+# The risk authority can refuse any order. No path in the engine may submit an
+# order without a positive decision.
+
+[risk]
+max_position_quantity = 100000.0
+max_order_notional = 250000.0
+max_open_positions = 1
+trading_halted = false

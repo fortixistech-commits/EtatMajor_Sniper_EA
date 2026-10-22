@@ -1,0 +1,37 @@
+# ETAT-MAJOR SNIPER EA - reference simulation configuration
+#
+# This configuration drives the LABORATORY mode. It cannot open a connection
+# to a broker and cannot send a real order: the Phase 2 engine only simulates.
+#
+# Units
+#   spread_price / slippage_price : absolute price distance
+#                                   (0.00010 == 1.0 pip on EURUSD)
+#   commission_per_lot_per_side   : account currency, per lot, per side
+#   lot_size                      : instrument units making one lot
+
+[simulation]
+symbol = "EURUSD"
+timeframe = "1m"
+initial_capital = 100000.0
+currency = "USD"
+end_of_replay_policy = "CLOSE_AT_LAST_PRICE"
+seed = 20260105
+
+[execution]
+spread_price = 0.00010
+slippage_price = 0.00002
+slippage_random_max = 0.00003
+commission_per_lot_per_side = 7.0
+commission_fixed_per_order = 0.0
+reject_probability = 0.0
+lot_size = 100000.0
+min_quantity = 0.01
+max_quantity = 1000000.0
+quantity_step = 0.01
+allow_short = true
+
+[risk]
+max_position_quantity = 100000.0
+max_order_notional = 250000.0
+max_open_positions = 1
+trading_halted = false
