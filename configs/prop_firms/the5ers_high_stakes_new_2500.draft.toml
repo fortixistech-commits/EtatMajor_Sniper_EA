@@ -1,0 +1,172 @@
+# PROFIL DE CHALLENGE - THE5ERS HIGH STAKES (NEW) - COMPTE 2 500 USD
+#
+# STATUT : DRAFT
+# Ce profil est issu des parametres publiquement affiches par The5ers et
+# releves le 2026-10-22. Il ne peut PAS servir a conclure qu'une simulation
+# est conforme : le Challenge Engine doit refuser de statuer tant que
+# profile_status != "VERIFIED".
+#
+# Regle du projet : aucune regle de challenge n'est supposee. Les regles
+# inconnues sont declarees dans ambiguous_rules et le moteur retient le
+# verdict le plus defavorable parmi les interpretations testees.
+#
+# Format TOML : meme bibliotheque que le reste de la configuration du
+# projet (tomllib, standard library, aucune dependance).
+# Documentation : docs/propfirm/THE5ERS_REFERENCE.md
+
+profile_status = "DRAFT"
+profile_id = "the5ers-high-stakes-new-2500"
+profile_version = "0.1.0-draft"
+verified_on = "2026-10-22"
+verified_by = "chef de projet (relevement des pages officielles)"
+
+sources = [
+    "https://the5ers.com/high-stakes/",
+    "https://the5ers.com/faqs/what-are-the-general-rules-for-the-high-stakes-program/",
+]
+
+notes = """
+Valeurs de travail datees. Les conditions generales The5ers mises a jour le
+2026-10-20 doivent etre examinees avant toute utilisation reelle d'un EA.
+"""
+
+[program]
+name = "High Stakes"
+variant = "New"
+platform = "MT5 Hedge"
+fee_displayed = 19.0
+currency = "USD"
+max_duration_days = 0        # 0 = illimite (affiche)
+duration_note = "Duree maximale illimitee selon la page officielle"
+
+[account]
+initial_capital = 2500.0
+reference_capital = 2500.0
+reference_capital_rationale = """
+Les frais affiches de 19 USD sont deduits du capital de reference
+(hypothese la plus restrictive). A confirmer (verrou V4).
+"""
+
+[[steps]]
+index = 1
+profit_target_percent = 10.0
+profit_target_amount = 250.0
+min_profitable_days = 3
+
+[[steps]]
+index = 2
+profit_target_percent = 5.0
+profit_target_amount = 125.0
+min_profitable_days = 3
+reference_capital = 2500.0
+reference_capital_rationale = """
+Le capital de reference de l'etape 2 est suppose egal a 2 500 USD, et non au
+capital augmente apres l'etape 1 (hypothese la plus restrictive, verrou V5).
+"""
+
+[limits]
+max_daily_loss_percent = 5.0
+max_daily_loss_amount = 125.0
+max_total_loss_percent = 10.0
+max_total_loss_amount = 250.0
+drawdown_type = "UNRESOLVED"        # verrou V1 : statique ou trailing
+drawdown_basis = "UNRESOLVED"       # verrou V1 : solde ou equity
+daily_reset_time = "UNRESOLVED"     # verrou V2
+daily_reset_timezone = "UNRESOLVED" # verrou V2
+
+[trading_days]
+min_profitable_days_per_step = 3
+profitable_day_definition = "UNRESOLVED"   # verrou V3
+assumed_definition = "PnL realise net de frais strictement positif sur la journee"
+
+[instruments]
+allowed = []
+prohibited_news_trading = false
+max_concurrent_positions = 0         # 0 = non renseigne (verrou V7)
+aggregation_note = """
+Hypothese V6 : toutes les positions du compte sont agregees pour le calcul
+des pertes (lecture la plus restrictive).
+"""
+
+[evaluation]
+policy = "most_restrictive_interpretation"
+pass_requires_all_interpretations = true
+inconclusive_status = "INVALID"
+reasons_are_explicit = true
+allowed_states = ["READY", "RUNNING", "PASSED", "FAILED", "INVALID", "REVIEW_REQUIRED"]
+
+# --- regles ambigues : aucune n'est supposee, toutes sont declarees --------
+[[ambiguous_rules]]
+id = "V1"
+topic = "daily_loss_method"
+description = """
+La perte quotidienne maximale de 5 % est-elle calculee sur le solde (statique)
+ou sur l'equity (trailing) ?
+"""
+status = "UNRESOLVED"
+evaluation_policy = "most_restrictive"
+
+  [[ambiguous_rules.interpretations]]
+  id = "balance_static"
+  rule = "daily_loss_basis = balance"
+
+  [[ambiguous_rules.interpretations]]
+  id = "equity_trailing"
+  rule = "daily_loss_basis = equity_trailing_from_daily_start"
+
+[[ambiguous_rules]]
+id = "V2"
+topic = "daily_reset"
+description = "Heure et fuseau de reinitialisation du compteur quotidien."
+status = "UNRESOLVED"
+evaluation_policy = "report_explicitly"
+
+[[ambiguous_rules]]
+id = "V3"
+topic = "profitable_day"
+description = "Definition exacte d'un jour profitable."
+status = "UNRESOLVED"
+evaluation_policy = "most_restrictive"
+assumed = "realised_net_pnl_strictly_positive"
+
+[[ambiguous_rules]]
+id = "V4"
+topic = "fee_treatment"
+description = "Les frais de 19 USD sont-ils deduits du capital de reference ?"
+status = "UNRESOLVED"
+evaluation_policy = "most_restrictive"
+assumed = "deducted_from_reference_capital"
+
+[[ambiguous_rules]]
+id = "V5"
+topic = "step2_reference_capital"
+description = "Capital de reference de l'etape 2."
+status = "UNRESOLVED"
+evaluation_policy = "most_restrictive"
+assumed = "2500.0"
+
+[[ambiguous_rules]]
+id = "V6"
+topic = "loss_aggregation"
+description = "Traitement des positions simultanees dans le calcul des pertes."
+status = "UNRESOLVED"
+evaluation_policy = "most_restrictive"
+assumed = "aggregate_all_positions"
+
+[[ambiguous_rules]]
+id = "V7"
+topic = "news_and_session_restrictions"
+description = "Restrictions d'horaires, d'evenements macro et d'instruments."
+status = "UNRESOLVED"
+evaluation_policy = "report_explicitly"
+
+[[ambiguous_rules]]
+id = "V8"
+topic = "written_authorization_for_ea"
+description = """
+Confirmation ecrite de The5ers autorisant l'usage de l'EA et de
+l'architecture de replication eventuelle.
+"""
+status = "UNRESOLVED"
+evaluation_policy = "blocking_for_real_evaluation"
+blocking_scope = "mission_14"
