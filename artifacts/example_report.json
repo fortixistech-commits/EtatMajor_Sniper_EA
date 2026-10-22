@@ -44,12 +44,13 @@
       "currency": "USD",
       "end_of_replay_policy": "CLOSE_AT_LAST_PRICE",
       "initial_capital": 100000.0,
+      "mode": "LAB",
       "seed": 20260105,
       "symbol": "EURUSD",
       "timeframe": "1m"
     }
   },
-  "config_fingerprint": "dc8cbcc9be20d93a",
+  "config_fingerprint": "eaa793eb20f64398",
   "dataset": {
     "bars": 240,
     "content_fingerprint": "5cd5acdd05a01369",
@@ -160,7 +161,7 @@
     "risk": {},
     "risk_count": 0
   },
-  "report_fingerprint": "8a3fc89fee604aea",
+  "report_fingerprint": "84806dd81eaf99c3",
   "schema_version": "1.0",
   "simulation_only": true,
   "strategy": {

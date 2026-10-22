@@ -28,14 +28,6 @@ class DataValidationError(EtatMajorError):
         self.issues: list[str] = list(issues or [])
 
 
-class RiskRejected(EtatMajorError):
-    """Raised when the risk authority refuses an operation."""
-
-    def __init__(self, message: str, reason: str = "") -> None:
-        super().__init__(message)
-        self.reason = reason
-
-
 class ExecutionError(EtatMajorError):
     """Raised when the execution layer cannot honour a valid request."""
 

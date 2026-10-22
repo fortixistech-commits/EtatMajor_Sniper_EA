@@ -100,6 +100,14 @@ class SimulatedBroker:
                 f"invalid quantity {order.quantity}: above broker maximum "
                 f"{self.config.max_quantity}"
             )
+        step = self.config.quantity_step
+        if step > 0:
+            ratio = order.quantity / step
+            if abs(ratio - round(ratio)) > 1e-9:
+                return (
+                    f"invalid quantity {order.quantity}: not aligned with the volume "
+                    f"step {step}"
+                )
         if order.side is OrderSide.SELL and not self.config.allow_short:
             return "short selling is disabled by the broker configuration"
         if order.order_type is OrderType.LIMIT and order.limit_price is None:

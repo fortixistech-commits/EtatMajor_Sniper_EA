@@ -179,6 +179,13 @@ def main() -> int:
         for path in REPO_ROOT.rglob("*.py")
         if ".venv" not in str(path) and "site-packages" not in str(path)
     )
+    # Callbacks appeles par un framework externe (NautilusTrader) : ils ne
+    # sont jamais references par notre code, par construction.
+    FRAMEWORK_CALLBACKS = {
+        "scripts.probe_nautilus.on_order_filled",
+        "scripts.probe_nautilus.on_position_opened",
+        "scripts.probe_nautilus.on_position_closed",
+    }
     unused: list[dict] = []
     for entry in files:
         if not entry["module"].startswith(("src.", "scripts.")):
@@ -187,7 +194,7 @@ def main() -> int:
             if name.startswith("_"):
                 continue
             occurrences = len(re.findall(rf"\b{re.escape(name)}\b", corpus))
-            if occurrences <= 1:
+            if occurrences <= 1 and f"{entry['module']}.{name}" not in FRAMEWORK_CALLBACKS:
                 unused.append({"module": entry["module"], "symbol": name})
 
     # Exceptions déclarées mais jamais levées : le contrat d'erreur du
@@ -202,8 +209,15 @@ def main() -> int:
                 declared_exceptions.append(name)
         for match in re.finditer(r"raise\s+([A-Za-z_][A-Za-z0-9_]*)", corpus):
             raised_exceptions.append(match.group(1))
+    # La classe racine de la hierarchie n'est pas levee directement : c'est
+    # le comportement attendu, pas une exception orpheline.
+    ROOT_EXCEPTIONS = {"EtatMajorError"}
     exceptions_never_raised = sorted(
-        {name for name in declared_exceptions if name not in raised_exceptions}
+        {
+            name
+            for name in declared_exceptions
+            if name not in raised_exceptions and name not in ROOT_EXCEPTIONS
+        }
     )
 
     stub_functions = [

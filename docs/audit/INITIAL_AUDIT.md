@@ -505,6 +505,25 @@ corrections du socle existant, prerequisites à toute affirmation de fiabilité.
 
 ---
 
+## 10 bis. Suivi des corrections
+
+| Défaut | Statut | Correction | Preuve |
+| --- | --- | --- | --- |
+| AUDIT-D1 — rejeu quadratique | **corrigé** | C1 (`VisibleBars`) | 114,2 → 5,8 µs/bougie à 20 000 ; 1 M de bougies en 9,7 s (`docs/audit/evidence/benchmark*.json`) |
+| AUDIT-D2 — `on_stop` jamais appelé | **corrigé** | C2 | `test_on_stop_is_called_exactly_once_with_a_final_context` |
+| AUDIT-D3 — expiration non appliquée | **corrigé** | C2 | `test_an_expired_signal_is_not_executed_and_is_journalised_as_an_abstention` |
+| AUDIT-D4 — `quantity_step` non appliqué | **corrigé** | C3 | `test_the_broker_refuses_a_quantity_that_is_not_aligned_with_the_step` |
+| AUDIT-D5 — `mode` codé en dur | **corrigé** | C3 | `tests/unit/test_operating_mode.py` |
+| AUDIT-D6 — exceptions jamais levées | **corrigé** | C3 | `exceptions never raised : []` |
+| AUDIT-D7 — API morte | **corrigé** | C3 | `unreferenced syms : 0` |
+| AUDIT-D8 — fingerprint recalculé 3 fois | **corrigé** | C3 | cache dans `Dataset` |
+| AUDIT-D9 — détection de trous approximative | ouvert | C5 | — |
+| AUDIT-D10 — pas de catalogue d'instruments | ouvert | C5 | — |
+| AUDIT-D11 — socle challenge absent | ouvert | C4, C6 | — |
+| AUDIT-D12 — RiskGovernor sans conscience du challenge | ouvert | C7 | — |
+
+Rapport de livraison de la phase A : `docs/audit/PHASE_A_REPORT.md`.
+
 ## 11. Décision proposée
 
 **VALIDÉ POUR REVUE.**

@@ -77,9 +77,18 @@ indisponible au moment de la décision. Sur un dataset discontinu (gap), le
 prix d'exécution est le prix d'ouverture après le gap, jamais le prix de
 clôture de la bougie de signal.
 
-La stratégie ne reçoit que `visible_bars`, c'est-à-dire la tranche
-`bars[0..i]`. Le moteur ne lui transmet aucune donnée future et aucun accès
-direct au dataset complet n'est exposé.
+La stratégie ne reçoit que `visible_bars`, une **vue bornée** sur la tranche
+`bars[0..i]` (`strategies.base.VisibleBars`). Le moteur ne lui transmet aucune
+donnée future et aucun accès direct au dataset complet n'est exposé.
+
+La vue ne **copie** rien : elle conserve la séquence sous-jacente et une
+limite, ce qui rend l'accès O(1). Une implémentation antérieure qui
+recopiait l'historique visible à chaque bougie rendait le rejeu quadratique
+(114 µs/bougie à 20 000 bougies) ; elle a été remplacée en Phase A
+(cf. `docs/audit/PHASE_A_REPORT.md`).
+
+Un index hors de la fenêtre visible lève une `IndexError` explicite : il est
+impossible de lire une bougie future, y compris par un index négatif.
 
 **Horloge.** `core.clock.SimClock` porte un timestamp en nanoseconds. Elle
 avance au fil du replay et refuse de reculer. Aucun composant ne lit
@@ -173,6 +182,21 @@ au dernier cours.
 
 Les rapports ne contiennent aucune information d'horloge murale : c'est ce qui
 permet la comparaison octet pour octet entre deux exécutions.
+
+## 8 bis. Modes de fonctionnement
+
+Le mode est paramétré et validé au démarrage (`core.types.OperatingMode`) :
+
+| Mode | État | Commentaire |
+| --- | --- | --- |
+| `LAB` | autorisé | laboratoire, simulation pure |
+| `CHALLENGE_SIM` | autorisé | simulation de challenge (Challenge Engine) |
+| `PAPER` | **refusé** | aucun adaptateur de données live n'existe dans ce build (Mission 8) |
+| `PRODUCTION` | **refusé** | exige une autorisation humaine explicite (Mission 10) |
+
+Le mode actif figure dans chaque rapport. Le passage d'un mode à l'autre
+n'est jamais implicite : un mode non disponible arrête le programme avec un
+message explicite.
 
 ## 9. Limites connues de la Phase 2
 
