@@ -59,7 +59,7 @@ def build_report(
         "schema_version": "1.0",
         "project": "ETAT-MAJOR SNIPER EA",
         "phase": "2",
-        "mode": "LABORATORY",
+        "mode": config.simulation.mode.report_label,
         "simulation_only": True,
         "strategy": {
             "id": getattr(strategy, "strategy_id", "unknown"),

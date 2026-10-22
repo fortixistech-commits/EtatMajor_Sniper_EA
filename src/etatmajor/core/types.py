@@ -16,10 +16,24 @@ class OrderSide(str, Enum):
         """``+1`` for a buy, ``-1`` for a sell."""
         return 1 if self is OrderSide.BUY else -1
 
+
+class OperatingMode(str, Enum):
+    """Operating mode of the platform.
+
+    Switching from one mode to another is never implicit: each mode has its
+    own capabilities and constraints, and a mode that is not available is
+    refused at start-up with an explicit message.
+    """
+
+    LAB = "LAB"
+    CHALLENGE_SIM = "CHALLENGE_SIM"
+    PAPER = "PAPER"
+    PRODUCTION = "PRODUCTION"
+
     @property
-    def opposite(self) -> "OrderSide":
-        """The opposing side."""
-        return OrderSide.SELL if self is OrderSide.BUY else OrderSide.BUY
+    def report_label(self) -> str:
+        """Label displayed in the reports."""
+        return "LABORATORY" if self is OperatingMode.LAB else self.value
 
 
 class OrderType(str, Enum):
@@ -47,14 +61,6 @@ class OrderStatus(str, Enum):
     REJECTED = "REJECTED"
 
 
-class TimeInForce(str, Enum):
-    """Supported time-in-force policies."""
-
-    GTC = "GTC"
-    IOC = "IOC"
-    DAY = "DAY"
-
-
 class EndOfReplayPolicy(str, Enum):
     """Policy applied to pending orders and open positions at replay end."""
 
@@ -75,6 +81,7 @@ class EventType(str, Enum):
 
     BAR = "BAR"
     SIGNAL = "SIGNAL"
+    SIGNAL_EXPIRED = "SIGNAL_EXPIRED"
     RISK_DECISION = "RISK_DECISION"
     ORDER_SUBMITTED = "ORDER_SUBMITTED"
     ORDER_ACCEPTED = "ORDER_ACCEPTED"

@@ -113,5 +113,10 @@ class DemoLifecycleStrategy:
             order_type=order_type,
             limit_price=limit_price,
             reason=reason,
-            data_refs=(f"bar[{context.index}]",),
+            # Provenance de la decision : la bougie courante et les trois
+            # dernieres bougies visibles. La stratgie de demonstration
+            # n'applique aucun filtre (elle ne pretend a aucune
+            # rentabilite) ; elle trace simplement les donnees vues.
+            data_refs=(f"bar[{context.index}]",)
+            + tuple(f"bar[{bar.ts_open_ns}]" for bar in context.last_bars(3)),
         )

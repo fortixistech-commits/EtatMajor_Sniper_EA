@@ -24,12 +24,13 @@ from ..core.clock import SimClock
 from ..core.config import AppConfig
 from ..core.events import Fill, Order, Signal
 from ..core.journal import Journal
+from ..core.errors import ExecutionError, StrategyError
 from ..core.types import EventType, OrderSide, OrderStatus, OrderType, SignalAction
 from ..data.loader import Dataset
 from ..execution.accounting import Portfolio
 from ..execution.broker import SimulatedBroker
 from ..risk.governor import MinimalRiskGovernor, OrderRequest, RiskGovernor
-from ..strategies.base import Strategy, StrategyContext
+from ..strategies.base import Strategy, StrategyContext, VisibleBars
 
 
 @dataclass
@@ -76,6 +77,7 @@ class ReplayEngine:
         self.clock = SimClock()
         self.risk_rejections: list[dict] = []
         self.broker_rejections: list[dict] = []
+        self.expired_signals: int = 0
 
     # -- main loop ----------------------------------------------------
     def run(self) -> ReplayResult:
@@ -101,6 +103,7 @@ class ReplayEngine:
             self._process_bar_close(index, bar)
 
         self._finish_replay()
+        self._call_on_stop(bars)
         return self._build_result()
 
     # -- steps --------------------------------------------------------
@@ -115,20 +118,58 @@ class ReplayEngine:
         context = StrategyContext(
             index=-1,
             bar=first,
-            visible_bars=(),
+            visible_bars=VisibleBars(self.dataset.bars, 0),
             clock=self.clock,
             portfolio=self.portfolio.snapshot(),
             recent_fills=(),
         )
         try:
             self.strategy.on_start(context)
-        except Exception as exc:  # pragma: no cover - defensive
+        except StrategyError:
+            raise
+        except Exception as exc:
             self.journal.append(
                 self.clock.now(),
                 EventType.ERROR.value,
                 {"where": "strategy.on_start", "error": repr(exc)},
             )
+            raise StrategyError(
+                f"strategy {getattr(self.strategy, 'strategy_id', '?')} violated its "
+                f"contract in on_start: {exc}"
+            ) from exc
+
+    def _call_on_stop(self, bars) -> None:
+        """Notifie la strategie de la fin de la campagne (contexte final).
+
+        Appele une fois et une seule, apres la politique de fin de replay :
+        la strategie voit l'etat final du portefeuille et peut consigner son
+        bilan de campagne.
+        """
+        last = bars[-1]
+        self.clock = self.clock.advance_to(last.ts_close_ns)
+        context = StrategyContext(
+            index=len(bars) - 1,
+            bar=last,
+            visible_bars=VisibleBars(self.dataset.bars, len(bars)),
+            clock=self.clock,
+            portfolio=self.portfolio.snapshot(),
+            recent_fills=tuple(self.broker.fills[-10:]),
+            final=True,
+        )
+        try:
+            self.strategy.on_stop(context)
+        except StrategyError:
             raise
+        except Exception as exc:
+            self.journal.append(
+                self.clock.now(),
+                EventType.ERROR.value,
+                {"where": "strategy.on_stop", "error": repr(exc)},
+            )
+            raise StrategyError(
+                f"strategy {getattr(self.strategy, 'strategy_id', '?')} violated its "
+                f"contract in on_stop: {exc}"
+            ) from exc
 
     def _process_bar_open(self, index: int, bar) -> None:
         self.clock = self.clock.advance_to(bar.ts_open_ns)
@@ -202,20 +243,25 @@ class ReplayEngine:
         context = StrategyContext(
             index=index,
             bar=bar,
-            visible_bars=tuple(self.dataset.bars[: index + 1]),
+            visible_bars=VisibleBars(self.dataset.bars, index + 1),
             clock=self.clock,
             portfolio=self.portfolio.snapshot(),
             recent_fills=tuple(self.broker.fills[-10:]),
         )
         try:
             signals = self.strategy.on_bar(context) or []
-        except Exception as exc:  # pragma: no cover - defensive
+        except StrategyError:
+            raise
+        except Exception as exc:
             self.journal.append(
                 self.clock.now(),
                 EventType.ERROR.value,
                 {"where": "strategy.on_bar", "error": repr(exc)},
             )
-            raise
+            raise StrategyError(
+                f"strategy {getattr(self.strategy, 'strategy_id', '?')} violated its "
+                f"contract in on_bar: {exc}"
+            ) from exc
 
         for signal in signals:
             self._handle_signal(signal, bar, index)
@@ -227,6 +273,23 @@ class ReplayEngine:
             {**signal.to_dict(), "signal_bar_index": bar_index},
         )
         if signal.action is SignalAction.NONE:
+            return
+
+        # Signal expire : abstention explicite, jamais une execution.
+        if signal.expires_ts_ns is not None and signal.expires_ts_ns < self.clock.now():
+            self.expired_signals += 1
+            self.journal.append(
+                self.clock.now(),
+                EventType.SIGNAL_EXPIRED.value,
+                {
+                    "strategy_id": signal.strategy_id,
+                    "symbol": signal.symbol,
+                    "action": signal.action.value,
+                    "expires_ts_ns": signal.expires_ts_ns,
+                    "now_ns": self.clock.now(),
+                    "reason": "signal expired before submission",
+                },
+            )
             return
 
         side = OrderSide.BUY if signal.action is SignalAction.BUY else OrderSide.SELL
@@ -411,29 +474,24 @@ class ReplayEngine:
             },
         )
         if order.status is OrderStatus.REJECTED:
-            self.broker_rejections.append(
-                {
-                    "ts_ns": self.clock.now(),
-                    "stage": "broker",
-                    "symbol": symbol,
-                    "side": side.value,
-                    "quantity": quantity,
-                    "reason": order.reason,
-                }
-            )
+            rejection = {
+                "ts_ns": self.clock.now(),
+                "stage": "broker",
+                "symbol": symbol,
+                "side": side.value,
+                "quantity": quantity,
+                "reason": order.reason,
+            }
+            self.broker_rejections.append(rejection)
             self.journal.append(
                 self.clock.now(),
                 EventType.ORDER_REJECTED.value,
-                {
-                    "ts_ns": self.clock.now(),
-                    "stage": "broker",
-                    "symbol": symbol,
-                    "side": side.value,
-                    "quantity": quantity,
-                    "reason": order.reason,
-                },
+                rejection,
             )
-            return
+            raise ExecutionError(
+                f"the simulated broker refused the end-of-replay closure order "
+                f"({symbol} {side.value} {quantity}): {order.reason}"
+            )
 
         fill = self.broker.execute_market(order, self._synthetic_bar(last_bar), self.clock.now())
         if fill is None:  # pragma: no cover - market orders always fill

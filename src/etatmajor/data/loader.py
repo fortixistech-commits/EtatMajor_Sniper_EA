@@ -81,6 +81,7 @@ class Dataset:
     sha256: str = ""
     timeframe_ns: int = 0
     quality: DataQualityReport = field(default_factory=DataQualityReport)
+    _fingerprint: str | None = field(default=None, repr=False, compare=False)
 
     def __len__(self) -> int:
         return len(self.bars)
@@ -94,14 +95,21 @@ class Dataset:
         return self.bars[-1].ts_open_ns if self.bars else None
 
     def fingerprint(self) -> str:
-        """Hash of the dataset content, independent of its file location."""
+        """Hash of the dataset content, independent of its file location.
+
+        The value is computed once and cached: it is requested by the report,
+        by the journal and by the run header.
+        """
+        if self._fingerprint is not None:
+            return self._fingerprint
         digest = hashlib.sha256()
         for bar in self.bars:
             digest.update(
                 f"{bar.ts_open_ns}|{bar.open}|{bar.high}|{bar.low}|{bar.close}|"
                 f"{bar.volume}\n".encode("utf-8")
             )
-        return digest.hexdigest()[:16]
+        self._fingerprint = digest.hexdigest()[:16]
+        return self._fingerprint
 
     def to_dict(self) -> dict:
         return {
@@ -292,7 +300,8 @@ def load_csv(
     # Gap detection (reported as a warning: missing bars do not corrupt the
     # dataset but must be visible in the quality report).
     if timeframe_ns > 0 and len(bars) > 1:
-        expected = (bars[-1].ts_open_ns - bars[0].ts_open_ns) // timeframe_ns + 1
+        step_ns = bars[0].duration_ns
+        expected = (bars[-1].ts_open_ns - bars[0].ts_open_ns) // step_ns + 1
         missing = expected - len(bars)
         if missing > 0:
             report.missing_bars = int(missing)
@@ -301,7 +310,8 @@ def load_csv(
                 f"(expected {expected} slots, got {len(bars)})"
             )
 
-    report.errors.extend(issues)
+    for issue in issues:
+        report.add_error(issue)
     if report.errors and strict:
         raise DataValidationError(
             f"market data validation failed for {source} "

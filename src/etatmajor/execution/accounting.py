@@ -61,9 +61,6 @@ class Portfolio:
         position = self.positions.get(symbol)
         return position.quantity if position else 0.0
 
-    def open_symbols(self) -> list[str]:
-        return [s for s, p in self.positions.items() if not p.is_flat]
-
     # -- booking ------------------------------------------------------
     def apply_fill(self, fill: Fill) -> Position:
         """Book a fill: position, realised PnL, fees and cash."""
@@ -134,14 +131,6 @@ class Portfolio:
     @property
     def net_pnl(self) -> float:
         return self.equity - self.initial_capital
-
-    def notional(self, symbol: str, price: float | None = None) -> float:
-        """Absolute market value of the position of ``symbol``."""
-        position = self.positions.get(symbol)
-        if position is None or position.is_flat:
-            return 0.0
-        mark = price if price is not None else self.mark_prices.get(symbol, position.last_price)
-        return abs(position.quantity) * mark
 
     def snapshot(self) -> PortfolioSnapshot:
         """Immutable snapshot handed to strategies and the risk authority."""

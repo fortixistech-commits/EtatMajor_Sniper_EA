@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from .errors import ConfigurationError
-from .types import EndOfReplayPolicy
+from .types import EndOfReplayPolicy, OperatingMode
 
 TIMEFRAME_UNITS_NS = {
     "s": 1_000_000_000,
@@ -49,6 +49,7 @@ class SimulationConfig:
     initial_capital: float = 100_000.0
     currency: str = "USD"
     end_of_replay_policy: EndOfReplayPolicy = EndOfReplayPolicy.CLOSE_AT_LAST_PRICE
+    mode: OperatingMode = OperatingMode.LAB
     seed: int = 0
 
     @property
@@ -65,10 +66,34 @@ class SimulationConfig:
         if not self.currency.strip():
             raise ConfigurationError("simulation.currency must not be empty")
         timeframe_to_ns(self.timeframe)
+        self._validate_mode()
+
+    def _validate_mode(self) -> None:
+        """Refuse les modes dont les capacites ne sont pas implementees.
+
+        Le passage a un mode donne n'est jamais implicite : un mode non
+        autorise arrete le programme au demarrage, avec un message explicite.
+        """
+        if self.mode is OperatingMode.LAB:
+            return
+        if self.mode is OperatingMode.CHALLENGE_SIM:
+            return
+        if self.mode is OperatingMode.PAPER:
+            raise ConfigurationError(
+                "simulation.mode = PAPER is refused: no live market data adapter "
+                "exists in this build (Mission 8). Data freshness and paper "
+                "execution cannot be guaranteed without it."
+            )
+        raise ConfigurationError(
+            "simulation.mode = PRODUCTION is refused: production requires an "
+            "explicit human authorisation and a validated challenge profile "
+            "(Mission 10). It is never enabled by default."
+        )
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
         payload["end_of_replay_policy"] = self.end_of_replay_policy.value
+        payload["mode"] = self.mode.value
         return payload
 
 
@@ -192,15 +217,26 @@ def _build(cls, payload: dict[str, Any], section: str) -> Any:
         raise ConfigurationError(
             f"unknown key(s) in section [{section}]: {sorted(unknown)}; allowed: {sorted(known)}"
         )
-    if cls is SimulationConfig and "end_of_replay_policy" in payload:
-        value = payload["end_of_replay_policy"]
-        try:
-            payload["end_of_replay_policy"] = EndOfReplayPolicy(value)
-        except ValueError as exc:
-            allowed = [p.value for p in EndOfReplayPolicy]
-            raise ConfigurationError(
-                f"simulation.end_of_replay_policy must be one of {allowed} (got {value!r})"
-            ) from exc
+    if cls is SimulationConfig:
+        if "end_of_replay_policy" in payload:
+            value = payload["end_of_replay_policy"]
+            try:
+                payload["end_of_replay_policy"] = EndOfReplayPolicy(value)
+            except ValueError as exc:
+                allowed = [p.value for p in EndOfReplayPolicy]
+                raise ConfigurationError(
+                    f"simulation.end_of_replay_policy must be one of {allowed} "
+                    f"(got {value!r})"
+                ) from exc
+        if "mode" in payload:
+            value = payload["mode"]
+            try:
+                payload["mode"] = OperatingMode(value)
+            except ValueError as exc:
+                allowed = [m.value for m in OperatingMode]
+                raise ConfigurationError(
+                    f"simulation.mode must be one of {allowed} (got {value!r})"
+                ) from exc
     try:
         return cls(**payload)
     except TypeError as exc:
