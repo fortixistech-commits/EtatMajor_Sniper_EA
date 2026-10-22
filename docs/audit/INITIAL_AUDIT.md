@@ -61,6 +61,19 @@ La branche `feat/phase-2-replay-engine` **n'est donc pas sur GitHub** et la
 Pull Request de la Phase 2 **n'a pas été ouverte**. Le rapport de Phase 2
 (documents cette limite) et le présent audit la maintiennent explicitement.
 
+**Procédure de livraison prête à l'emploi** (`scripts/push_branches.sh`) :
+elle utilise un jeton fourni par l'environnement `GITHUB_TOKEN` via
+`GIT_ASKPASS`, de sorte que le jeton n'apparaît ni dans la ligne de commande,
+ni dans `.git/config`, ni dans les journaux.
+
+```bash
+export GITHUB_TOKEN=<jeton repo:write sur ce seul dépôt>
+./scripts/push_branches.sh
+```
+
+Le script pousse `main`, `feat/phase-2-replay-engine` et `feat/mission-0-audit`,
+afin de permettre une Pull Request par phase (Phase 2, puis MISSION 0).
+
 ---
 
 ## 3. Inventaire des modules et de leurs dépendances
