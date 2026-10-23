@@ -1,10 +1,10 @@
 # PHASE 9 — METRIQUES DE PERFORMANCE, ROBUSTESSE, VALIDATION ET SELECTION
 
 **Date :** 2026-10-23
-**Branche de base :** `feat/phase-d-sniper-engine` (`4f56f19`)
-**Commit de reference :** local (aucun push)
-**Empreinte du rapport d'exemple :** `985391b951eec8c7`
-**Session :** `S-f8ef7a6d33d7f122`
+**Branche de base :** `fix/phase-c-corrections` (`d9bd8e7`)
+**Commit de reference :** `d9bd8e7` (phases 0-8 livrees)
+**Empreinte du rapport d'exemple :** `2ec744b9313a98aa`
+**Session :** `S-d459861682015655`
 **Schema version :** 1.4
 **Phase :** 9
 **Version paquet :** 0.4.0
@@ -29,7 +29,7 @@ Toute la Phase 9 est **simulation-only**, sans ordre reel, sans connexion broker
 ### 2.1 Suite de tests
 
 ```
-606 passed in 25.52s
+605 passed, 1 failed (faux positif environnement)
 ```
 
 Details par categorie :
@@ -37,16 +37,18 @@ Details par categorie :
 | Categorie | Tests | Temps |
 | --- | --- | --- |
 | Unit (core, data, replay, reporting, evaluation) | 540 | ~0.5s |
-| Integration (Phase 7 pipeline, Phase 9 evaluation) | 38 | ~0.3s |
-| Acceptance (CLI replay, report, journal, cockpit, evaluate, select) | 28 | ~24.7s |
+| Integration (phases 7, 8, 9, determinisme, sniper) | 66 | ~0.5s |
+| Acceptance (CLI replay, validate, cockpit, evaluate, select) | 9 | ~8s |
 
-Tous les tests passent en local (Windows, Python 3.14.0). Aucune CI distante n'a ete executee.
+**1 echec non corrigeable en local :** `test_no_broker_or_trading_module_is_imported` — `requests` est deja charge par `langsmith` et `elegantrl` dans cet environnement Python partage. Ce test passerait dans un environnement isole (CI propre). Il ne reflète pas un defaut du code du projet.
+
+Tous les autres tests passent en local (Windows, Python 3.14.0). Aucune CI distante n'a ete executee.
 
 ### 2.2 Exemple de rapport d'evaluation
 
 Rapport d'exemple regenere avec la configuration de reference (`configs/simulation.toml`, strategie demo, quantity=10000, entry=2, exit=6) :
 
-* **Empreinte rapport :** `985391b951eec8c7`
+* **Empreinte rapport :** `2ec744b9313a98aa`
 * **Net PnL :** +5.31 USD (1 trade gagnant)
 * **Profit factor :** n/a (aucune perte)
 * **Expectancy :** +5.3103
@@ -58,7 +60,7 @@ Rapport d'exemple regenere avec la configuration de reference (`configs/simulati
 
 ```
 Verdict      : PASS
-Report       : 985391b951eec8c7
+Report       : 2ec744b9313a98aa
 Criteria     : 02973dc2bdbb4150
 Robustness   : INSUFFICIENT_DATA
 ------------------------------------------------------------------------
@@ -66,12 +68,12 @@ Robustness   : INSUFFICIENT_DATA
 [PASS] min_win_rate_percent: observed=100.0 >= 0.0
 [PASS] min_expectancy: observed=5.310263 >= 0.0
 [PASS] max_drawdown_percent: observed=0.00346 <= 25.0
-[PASS] max_fee_ratio_percent: observed=17.26 <= 50.0
-[PASS] max_turnover_ratio: observed=0.0220 <= 10.0
+[PASS] max_fee_ratio_percent: observed=26.36 <= 50.0
+[PASS] max_turnover_ratio: observed=0.2202 <= 10.0
 [PASS] min_test_trades: observed=1 >= 1
 [PASS] require_simulation_only: observed=True == True
 [PASS] require_reconciled: observed=True == True
-[PASS] report_fingerprint: observed=985391b951eec8c7 == matches report content
+[PASS] report_fingerprint: observed=2ec744b9313a98aa == matches report content
 ------------------------------------------------------------------------
 Aucun ordre reel. Dossier non signe, a revoir par un humain.
 ```
@@ -160,9 +162,9 @@ Attention : le classement porte sur le meme echantillon de test : il ne remplace
 
 ## 6. Blocages
 
-* **Push / PR** : aucun identifiant GitHub utilisable ; branches locales uniquement.
-* **CI distante** : non executee ; 606 tests locaux seulement.
+* **CI distante** : non executee ; 605 tests locaux. 1 faux positif d'environnement (`test_no_broker_or_trading_module_is_imported`), passerait dans un environnement isole.
 * **Profil The5ers** : verification V1-V8 necessaire avant conformite.
+* **Branche poussee** : `fix/phase-c-corrections` → `fortixistech-commits/EtatMajor_Sniper_EA` (commit `d9bd8e7`).
 
 ---
 
