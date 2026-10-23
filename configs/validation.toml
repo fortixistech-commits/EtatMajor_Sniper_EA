@@ -1,0 +1,14 @@
+# Phase 9 validation criteria: declare the thresholds BEFORE looking at results.
+# This laboratory example is intentionally permissive. A production dossier
+# must use thresholds derived from the mandate, not from a backtest.
+[validation]
+description = "laboratory smoke criteria, not a certification"
+min_trades = 1
+min_expectancy = 0.0
+min_win_rate_percent = 0.0
+max_drawdown_percent = 25.0
+max_fee_ratio_percent = 50.0
+max_turnover_ratio = 10.0
+min_test_trades = 1
+require_reconciled = true
+require_simulation_only = true

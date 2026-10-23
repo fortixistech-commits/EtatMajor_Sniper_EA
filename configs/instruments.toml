@@ -1,0 +1,80 @@
+# Catalogue d'instruments - version de reference du laboratoire.
+#
+# ATTENTION : ces valeurs servent au developpement et a la simulation. Elles
+# ne remplacent pas les specifications officielles d'un broker. Toute valeur
+# utilisee pour le risque reel doit etre verifiee a la source et versionnee.
+#
+# Unites : les quantites sont exprimees en unites d'instrument (pas en lots).
+# `tick_value` est la valeur d'un tick pour un lot (contract_size unites) dans
+# la devise indiquee.
+
+version = "1.0.0"
+
+[instruments.EURUSD]
+symbol = "EURUSD"
+asset_class = "forex"
+base_currency = "EUR"
+quote_currency = "USD"
+price_precision = 5
+tick_size = 0.00001
+tick_value = 1.0
+tick_value_currency = "USD"
+min_quantity = 1000.0
+quantity_step = 1000.0
+max_quantity = 10000000.0
+contract_size = 100000.0
+source = "laboratory reference; verify with broker before production"
+version = "1.0.0"
+
+[instruments.GBPUSD]
+symbol = "GBPUSD"
+asset_class = "forex"
+base_currency = "GBP"
+quote_currency = "USD"
+price_precision = 5
+tick_size = 0.00001
+tick_value = 1.0
+tick_value_currency = "USD"
+min_quantity = 1000.0
+quantity_step = 1000.0
+max_quantity = 10000000.0
+contract_size = 100000.0
+source = "laboratory reference; verify with broker before production"
+version = "1.0.0"
+
+[instruments.XAUUSD]
+symbol = "XAUUSD"
+asset_class = "metal"
+base_currency = "XAU"
+quote_currency = "USD"
+price_precision = 2
+tick_size = 0.01
+tick_value = 1.0
+tick_value_currency = "USD"
+min_quantity = 1.0
+quantity_step = 1.0
+max_quantity = 10000.0
+contract_size = 100.0
+source = "laboratory reference; verify with broker before production"
+version = "1.0.0"
+
+[brokers.mt5_demo]
+name = "MetaTrader 5 demo (placeholder mapping)"
+
+[brokers.mt5_demo.symbols.EURUSD]
+instrument_id = "EURUSD"
+min_quantity = 1000.0
+quantity_step = 1000.0
+max_quantity = 10000000.0
+
+[brokers.mt5_demo.symbols.GBPUSD]
+instrument_id = "GBPUSD"
+min_quantity = 1000.0
+quantity_step = 1000.0
+max_quantity = 10000000.0
+
+[brokers.mt5_demo.symbols.XAUUSD]
+instrument_id = "XAUUSD"
+min_quantity = 1.0
+quantity_step = 1.0
+max_quantity = 10000.0

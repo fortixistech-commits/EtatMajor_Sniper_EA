@@ -16,13 +16,15 @@ from __future__ import annotations
 import csv
 import hashlib
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
 from ..core.errors import DataValidationError
+from .instruments import InstrumentCatalog, InstrumentSpec
 from .models import Bar
+from .provenance import DataProvenance
 from .validation import DataQualityReport
 
 REQUIRED_COLUMNS = ("timestamp", "open", "high", "low", "close")
@@ -81,6 +83,9 @@ class Dataset:
     sha256: str = ""
     timeframe_ns: int = 0
     quality: DataQualityReport = field(default_factory=DataQualityReport)
+    instrument: InstrumentSpec | None = None
+    catalog_version: str | None = None
+    provenance: DataProvenance | None = None
     _fingerprint: str | None = field(default=None, repr=False, compare=False)
 
     def __len__(self) -> int:
@@ -122,6 +127,9 @@ class Dataset:
             "first_ts_ns": self.first_ts_ns,
             "last_ts_ns": self.last_ts_ns,
             "quality": self.quality.to_dict(),
+            "instrument": self.instrument.to_dict() if self.instrument else None,
+            "catalog_version": self.catalog_version,
+            "provenance": self.provenance.to_dict() if self.provenance else None,
         }
 
 
@@ -136,6 +144,9 @@ def load_csv(
     timeframe_ns: int,
     timestamp_unit: str = "s",
     strict: bool = True,
+    catalog: InstrumentCatalog | None = None,
+    broker_id: str | None = None,
+    provenance: DataProvenance | None = None,
 ) -> Dataset:
     """Load and validate an OHLC CSV file.
 
@@ -162,13 +173,37 @@ def load_csv(
             f"expected one of {sorted(EPOCH_UNITS_NS)}"
         )
 
+    instrument = catalog.require(symbol, broker_id) if catalog is not None else None
+    if provenance is not None:
+        provenance.validate()
+
     report = DataQualityReport()
     issues: list[str] = []
     bars: list[Bar] = []
     seen_ts: dict[int, int] = {}
+    if instrument is not None:
+        report.instrument_id = instrument.instrument_id
+    if catalog is not None:
+        report.catalog_version = catalog.version
 
     raw_bytes = source.read_bytes()
     sha256 = hashlib.sha256(raw_bytes).hexdigest()
+
+    if provenance is not None:
+        if provenance.checksum_sha256 is None:
+            # Le fichier lui-meme devient la reference verifiable de la
+            # provenance : aucune valeur n'est inventee, le hash est mesure.
+            provenance = replace(provenance, checksum_sha256=sha256)
+        elif provenance.checksum_sha256.lower() != sha256:
+            report.add_error(
+                "provenance checksum does not match the data file "
+                f"({provenance.checksum_sha256} != {sha256})"
+            )
+        if provenance.granularity != timeframe:
+            report.add_warning(
+                f"provenance granularity {provenance.granularity!r} differs from "
+                f"the dataset timeframe {timeframe!r}"
+            )
 
     text = raw_bytes.decode("utf-8-sig")
     reader = csv.reader(text.splitlines())
@@ -209,6 +244,7 @@ def load_csv(
         for column in ("open", "high", "low", "close"):
             value = _to_float(row[index[column]], column, line_no, issues)
             if value is None:
+                report.invalid_numbers += 1
                 broken = True
                 continue
             values[column] = value
@@ -216,6 +252,7 @@ def load_csv(
         if volume_present:
             volume_value = _to_float(row[index["volume"]], "volume", line_no, issues)
             if volume_value is None:
+                report.invalid_numbers += 1
                 broken = True
             else:
                 volume = volume_value
@@ -225,12 +262,14 @@ def load_csv(
 
         for column in ("open", "high", "low", "close"):
             if values[column] <= 0.0:
+                report.non_positive_prices += 1
                 issues.append(
                     f"line {line_no}: column {column!r} must be strictly positive "
                     f"(got {values[column]})"
                 )
                 broken = True
         if volume < 0.0:
+            report.negative_volume += 1
             issues.append(f"line {line_no}: column 'volume' must be >= 0 (got {volume})")
             broken = True
         if broken:
@@ -243,21 +282,20 @@ def load_csv(
             values["low"],
             values["close"],
         )
+        ohlc_problems: list[str] = []
         if high < low:
-            issues.append(
-                f"line {line_no}: high ({high}) is lower than low ({low})"
-            )
+            ohlc_problems.append(f"high ({high}) is lower than low ({low})")
         if high < max(open_, close):
-            issues.append(
-                f"line {line_no}: high ({high}) is below open/close "
-                f"({max(open_, close)}): inconsistent OHLC"
+            ohlc_problems.append(
+                f"high ({high}) is below open/close ({max(open_, close)})"
             )
         if low > min(open_, close):
-            issues.append(
-                f"line {line_no}: low ({low}) is above open/close "
-                f"({min(open_, close)}): inconsistent OHLC"
+            ohlc_problems.append(
+                f"low ({low}) is above open/close ({min(open_, close)})"
             )
-        if broken:
+        if ohlc_problems:
+            report.invalid_ohlc += 1
+            issues.append(f"line {line_no}: inconsistent OHLC: " + "; ".join(ohlc_problems))
             report.rows_rejected += 1
             continue
 
@@ -279,6 +317,19 @@ def load_csv(
             report.rows_rejected += 1
             continue
 
+        if (
+            timeframe_ns > 0
+            and bars
+            and (ts_open_ns - bars[0].ts_open_ns) % timeframe_ns != 0
+        ):
+            report.unaligned_timestamps += 1
+
+        if instrument is not None and not all(
+            instrument.is_price_aligned(price)
+            for price in (open_, high, low, close)
+        ):
+            report.tick_misaligned_prices += 1
+
         seen_ts[ts_open_ns] = line_no
         previous_ts = ts_open_ns
         bars.append(
@@ -299,16 +350,34 @@ def load_csv(
 
     # Gap detection (reported as a warning: missing bars do not corrupt the
     # dataset but must be visible in the quality report).
-    if timeframe_ns > 0 and len(bars) > 1:
-        step_ns = bars[0].duration_ns
-        expected = (bars[-1].ts_open_ns - bars[0].ts_open_ns) // step_ns + 1
-        missing = expected - len(bars)
-        if missing > 0:
-            report.missing_bars = int(missing)
+    if timeframe_ns > 0 and bars:
+        expected = (bars[-1].ts_open_ns - bars[0].ts_open_ns) // timeframe_ns + 1
+        report.expected_bars = int(expected)
+        report.missing_bars = int(max(0, expected - len(bars)))
+        report.coverage_ratio = (
+            round(len(bars) / expected, 6) if expected > 0 else None
+        )
+        for previous, current in zip(bars, bars[1:]):
+            if current.ts_open_ns - previous.ts_open_ns > timeframe_ns:
+                report.gap_count += 1
+        if report.missing_bars > 0:
             report.add_warning(
-                f"{missing} bar(s) missing in the dataset "
-                f"(expected {expected} slots, got {len(bars)})"
+                f"{report.missing_bars} bar(s) missing across "
+                f"{report.gap_count} gap(s) in the dataset "
+                f"(expected {expected} slots, got {len(bars)}, "
+                f"coverage {report.coverage_ratio:.4f})"
             )
+
+    if report.unaligned_timestamps:
+        report.add_warning(
+            f"{report.unaligned_timestamps} timestamp(s) are not aligned to the "
+            f"declared timeframe ({timeframe})"
+        )
+    if report.tick_misaligned_prices:
+        report.add_warning(
+            f"{report.tick_misaligned_prices} bar(s) contain a price that is not "
+            f"aligned to the instrument tick size"
+        )
 
     for issue in issues:
         report.add_error(issue)
@@ -327,4 +396,7 @@ def load_csv(
         sha256=sha256,
         timeframe_ns=timeframe_ns,
         quality=report,
+        instrument=instrument,
+        catalog_version=catalog.version if catalog is not None else None,
+        provenance=provenance,
     )

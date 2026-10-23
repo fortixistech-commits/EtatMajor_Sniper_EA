@@ -35,3 +35,20 @@ max_position_quantity = 100000.0
 max_order_notional = 250000.0
 max_open_positions = 1
 trading_halted = false
+
+[sniper]
+# Doctrine thresholds. Defaults keep the historical behaviour and only the
+# single open mission per instrument is enforced.
+risk_amount = 10.0
+reward_risk_multiple = 2.0
+volume_step = 0.01
+min_quantity = 0.01
+estimated_cost_per_unit = 0.0
+max_open_positions = 1
+min_confidence = 0.0
+min_setup_quality = 0.0
+require_structure_alignment = false
+require_htf_alignment = false
+block_extreme_volatility = false
+higher_timeframe_factor = 4
+max_missing_ratio = 0.10

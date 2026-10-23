@@ -25,6 +25,8 @@ artifacts/*
 artifacts/**/*.json
 !artifacts/example_report.json
 !artifacts/example_journal.jsonl
+!artifacts/example_cockpit.html
+!artifacts/example_cockpit.json
 !artifacts/nautilus_probe.json
 !artifacts/nautilus_probe_gap.json
 

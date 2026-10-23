@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="ETAT-MAJOR cockpit">
+<title>ETAT-MAJOR cockpit</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#131a2d;--line:#26314d;--text:#e8edf8;
+--muted:#98a5bd;--accent:#5cc8ff;--ok:#44d492;--warn:#f0b84b;--fail:#ff6b7a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);
+font:15px/1.55 "Segoe UI",system-ui,sans-serif}main{max-width:1180px;margin:0 auto;
+padding:32px 20px 56px}h1{font-size:30px;line-height:1.2;margin:4px 0 10px}
+h2{font-size:18px;margin:0 0 12px}h3{font-size:15px;margin:18px 0 6px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+padding:18px;margin:0 0 16px}.hero{background:radial-gradient(circle at 15% 0,#1c2c4b,var(--panel));
+padding:26px}.eyebrow{letter-spacing:.16em;font-size:11px;color:var(--accent);margin:0}
+.muted,.count{color:var(--muted)}.count{font-size:12px;font-weight:400}
+.badge{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;
+font-weight:700;margin-right:8px}.badge.ok{background:#103526;color:var(--ok)}
+.badge.warn{background:#3a2c10;color:var(--warn)}.badge.fail{background:#3c1620;color:var(--fail)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;
+margin:0 0 16px}.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.kpi span{display:block;color:var(--muted);font-size:12px}.kpi strong{display:block;
+font-size:20px;margin-top:5px;font-variant-numeric:tabular-nums}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px 10px;
+border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);background:#101728;font-weight:600}tr:last-child td{border-bottom:0}
+code{color:var(--accent);font-family:Consolas,monospace;font-size:12px}
+.empty{margin:0;color:var(--muted)}ul{margin:6px 0 0;padding-left:20px}
+footer{color:var(--muted);font-size:12px;text-align:center;margin-top:24px}
+@media(max-width:640px){main{padding:18px 12px}h1{font-size:24px}}
+</style>
+</head>
+<body>
+<main>
+<header class="hero">
+<p class="eyebrow">ETAT-MAJOR SNIPER EA / PHASE 9</p>
+<h1>ETAT-MAJOR cockpit</h1>
+<p><span class="badge ok">CONFORME</span> <span class="muted">Simulation uniquement. Aucun ordre reel.</span></p>
+</header>
+<section class="kpis"><div class="kpi"><span>Equity finale</span><strong>100005.31 USD</strong></div><div class="kpi"><span>PnL net</span><strong>+5.31</strong></div><div class="kpi"><span>Rendement</span><strong>+0.0053%</strong></div><div class="kpi"><span>Ordres / fills</span><strong>2 / 2</strong></div><div class="kpi"><span>Frais</span><strong>1.40</strong></div><div class="kpi"><span>Evenements</span><strong>16</strong></div></section>
+<section><h2>Identite de l&#x27;execution</h2><div class="table-wrap"><table><thead><tr><th>Champ</th><th>Valeur</th></tr></thead><tbody><tr><td>Session</td><td>S-f8ef7a6d33d7f122</td></tr><tr><td>Strategie</td><td>demo-lifecycle v1.0.0</td></tr><tr><td>Instrument</td><td>EURUSD / 1m</td></tr><tr><td>Periode</td><td>2026-01-05T00:00:00+00:00 -&gt; 2026-01-05T03:59:00+00:00</td></tr><tr><td>Schema / phase</td><td>1.4 / 9</td></tr><tr><td>Mode</td><td>LABORATORY</td></tr><tr><td>Code</td><td>etatmajor/0.3.0</td></tr><tr><td>Config</td><td>cfbc7c67757ba60e</td></tr><tr><td>Dataset</td><td>5cd5acdd05a01369</td></tr><tr><td>Politique de fin</td><td>CLOSE_AT_LAST_PRICE</td></tr></tbody></table></div></section>
+<section><h2>Integrite <span class="count">0</span></h2><p class="empty">Aucun ecart detecte entre le rapport et le journal.</p></section>
+<section><h2>Challenge</h2><p class="empty">Aucun challenge simule pour cette execution.</p></section>
+<section><h2>Donnees</h2><div class="table-wrap"><table><thead><tr><th>Controle</th><th>Valeur</th></tr></thead><tbody><tr><td>Qualite OK</td><td>True</td></tr><tr><td>Lignes acceptees</td><td>240</td></tr><tr><td>Lignes rejetees</td><td>0</td></tr><tr><td>Trous</td><td>0</td></tr><tr><td>Barres manquantes</td><td>0</td></tr><tr><td>Couverture</td><td>1.0</td></tr></tbody></table></div></section>
+<section><h2>Ordres</h2><div class="table-wrap"><table><thead><tr><th>ID</th><th>Sens</th><th>Type</th><th>Statut</th><th>Quantite</th><th>Prix moyen</th></tr></thead><tbody><tr><td>O-000001</td><td>BUY</td><td>MARKET</td><td>FILLED</td><td>10000.0</td><td>1.1008661537</td></tr><tr><td>O-000002</td><td>SELL</td><td>MARKET</td><td>FILLED</td><td>10000.0</td><td>1.10153718</td></tr></tbody></table></div></section>
+<section><h2>Executions</h2><div class="table-wrap"><table><thead><tr><th>Ordre</th><th>Sens</th><th>Quantite</th><th>Prix</th><th>Frais</th><th>Horodatage simule</th></tr></thead><tbody><tr><td>O-000001</td><td>BUY</td><td>10000.0</td><td>1.1008661537</td><td>0.7</td><td>2026-01-05T00:03:00+00:00</td></tr><tr><td>O-000002</td><td>SELL</td><td>10000.0</td><td>1.10153718</td><td>0.7</td><td>2026-01-05T00:07:00+00:00</td></tr></tbody></table></div></section>
+<section><h2>Journal</h2><div class="table-wrap"><table><thead><tr><th>Seq</th><th>Horodatage simule</th><th>Type</th><th>Motif</th></tr></thead><tbody><tr><td>0</td><td>1970-01-01T00:00:00+00:00</td><td>REPLAY_STARTED</td><td></td></tr><tr><td>1</td><td>1970-01-01T00:00:00+00:00</td><td>REPLAY_STARTED</td><td></td></tr><tr><td>2</td><td>2026-01-05T00:03:00+00:00</td><td>SIGNAL</td><td>demo: scheduled market entry</td></tr><tr><td>3</td><td>2026-01-05T00:03:00+00:00</td><td>RISK_DECISION</td><td>authorized by risk governor</td></tr><tr><td>4</td><td>2026-01-05T00:03:00+00:00</td><td>ORDER_SUBMITTED</td><td></td></tr><tr><td>5</td><td>2026-01-05T00:03:00+00:00</td><td>ORDER_ACCEPTED</td><td>demo: scheduled market entry</td></tr><tr><td>6</td><td>2026-01-05T00:03:00+00:00</td><td>ORDER_FILLED</td><td></td></tr><tr><td>7</td><td>2026-01-05T00:03:00+00:00</td><td>POSITION_OPENED</td><td></td></tr><tr><td>8</td><td>2026-01-05T00:07:00+00:00</td><td>SIGNAL</td><td>demo: scheduled market exit</td></tr><tr><td>9</td><td>2026-01-05T00:07:00+00:00</td><td>RISK_DECISION</td><td>authorized by risk governor</td></tr><tr><td>10</td><td>2026-01-05T00:07:00+00:00</td><td>ORDER_SUBMITTED</td><td></td></tr><tr><td>11</td><td>2026-01-05T00:07:00+00:00</td><td>ORDER_ACCEPTED</td><td>demo: scheduled market exit</td></tr><tr><td>12</td><td>2026-01-05T00:07:00+00:00</td><td>ORDER_FILLED</td><td></td></tr><tr><td>13</td><td>2026-01-05T00:07:00+00:00</td><td>POSITION_CLOSED</td><td></td></tr><tr><td>14</td><td>2026-01-05T04:00:00+00:00</td><td>RECONCILIATION</td><td></td></tr><tr><td>15</td><td>2026-01-05T04:00:00+00:00</td><td>REPLAY_FINISHED</td><td></td></tr></tbody></table></div></section>
+<section><h2>Observabilite</h2><p>Dernier evenement: REPLAY_FINISHED - chronologique: True - sessions: S-f8ef7a6d33d7f122</p><div class="table-wrap"><table><thead><tr><th>Type</th><th>Nombre</th></tr></thead><tbody><tr><td>ORDER_ACCEPTED</td><td>2</td></tr><tr><td>ORDER_FILLED</td><td>2</td></tr><tr><td>ORDER_SUBMITTED</td><td>2</td></tr><tr><td>POSITION_CLOSED</td><td>1</td></tr><tr><td>POSITION_OPENED</td><td>1</td></tr><tr><td>RECONCILIATION</td><td>1</td></tr><tr><td>REPLAY_FINISHED</td><td>1</td></tr><tr><td>REPLAY_STARTED</td><td>2</td></tr><tr><td>RISK_DECISION</td><td>2</td></tr><tr><td>SIGNAL</td><td>2</td></tr></tbody></table></div></section>
+<footer>
+<p>Rapport <code>985391b951eec8c7</code> - dataset <code>5cd5acdd05a01369</code> - cockpit 1.0</p>
+<p class="muted">Les resultats proviennent d'une simulation et ne constituent pas une garantie de performance.</p>
+</footer>
+</main>
+</body>
+</html>

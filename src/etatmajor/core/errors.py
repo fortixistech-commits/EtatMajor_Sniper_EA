@@ -34,3 +34,7 @@ class ExecutionError(EtatMajorError):
 
 class StrategyError(EtatMajorError):
     """Raised when a strategy violates the strategy contract."""
+
+
+class CockpitError(EtatMajorError):
+    """Raised when cockpit evidence cannot be read or interpreted."""

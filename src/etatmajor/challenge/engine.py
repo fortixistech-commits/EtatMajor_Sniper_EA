@@ -4,7 +4,16 @@ Le moteur ne repond pas a « combien aurions-nous gagne ? » mais a « aurions-n
 respecte les regles du challenge, et jusqu'ou ? ».
 
 Regles de conception
---------------------
+-------------------
+* **observer** et **juger** sont deux operations distinctes. ``observe`` fait
+  progresser l'etat (journees, maxima de perte, etapes validees) ; ``evaluate``
+  lit l'etat et ne le modifie jamais. Un meme etat de compte evalue plusieurs
+  fois produit donc exactement le meme verdict ;
+* une etape n'est validee que si ses propres regles sont satisfaites, et au
+  plus une etape est franchie par observation. Deux cibles franchies dans la
+  meme observation ne permettent pas de sauter l'etape intermediaire ;
+* une violation fatale (perte journaliere ou perte totale) est **terminale** :
+  elle reste enregistree meme si le solde ou l'equity remonte ensuite ;
 * un profil non verifie ne produit **jamais** un verdict de conformite : le
   verdict est ``INVALID`` et un etat *indicatif* est fourni a cote ;
 * une regle ambigue est evaluee sous toutes ses interpretations ; le verdict
@@ -13,6 +22,15 @@ Regles de conception
 * le compteur quotidien suit le profil (heure de reinitialisation) et
   l'hypothese employee est rappelee dans le verdict ;
 * le moteur ne modifie jamais le portefeuille : il observe et il juge.
+
+Limites du modele OHLC
+----------------------
+Une observation est faite a la cloture d'une bougie. Une violation qui
+survient puis se resorbe *a l'interieur* d'une meme bougie ne peut pas etre
+detectee avec des donnees OHLC : le moteur ne pretend pas reproduire une
+regle intrabar. Seules les violations visibles aux instants d'observation
+sont evaluees. Cette limite est explicite dans le verdict (``model_limits``)
+et dans la documentation de la phase C.
 """
 
 from __future__ import annotations
@@ -20,10 +38,39 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from ..core.errors import ConfigurationError
 from ..core.models import AccountState, ChallengeState
 from .profile import ChallengeProfile
 
 NANOSECONDS_PER_DAY = 86_400_000_000_000
+
+MODEL_LIMIT_INTRABAR = (
+    "OHLC observations only: an intrabar breach that recovers before the bar "
+    "close cannot be detected and is not simulated"
+)
+
+
+@dataclass(frozen=True)
+class FailureRecord:
+    """Violation fatale enregistree, conservée jusqu'a la fin de la campagne."""
+
+    kind: str
+    basis: str
+    amount: float
+    limit: float
+    ts_ns: int
+    step_index: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "kind": self.kind,
+            "basis": self.basis,
+            "amount": self.amount,
+            "limit": self.limit,
+            "ts_ns": self.ts_ns,
+            "step_index": self.step_index,
+            "terminal": True,
+        }
 
 
 @dataclass
@@ -72,6 +119,9 @@ class ChallengeVerdict:
     distance_to_total_limit: float = 0.0
     interpretations: list[InterpretationResult] = field(default_factory=list)
     assumptions: list[str] = field(default_factory=list)
+    failures: list[FailureRecord] = field(default_factory=list)
+    ignored_observations: int = 0
+    model_limits: list[str] = field(default_factory=list)
 
     @property
     def is_conclusive(self) -> bool:
@@ -98,6 +148,9 @@ class ChallengeVerdict:
             "distance_to_total_limit": self.distance_to_total_limit,
             "interpretations": [i.to_dict() for i in self.interpretations],
             "assumptions": list(self.assumptions),
+            "failures": [failure.to_dict() for failure in self.failures],
+            "ignored_observations": self.ignored_observations,
+            "model_limits": list(self.model_limits),
         }
 
 
@@ -110,11 +163,20 @@ class ChallengeEngine:
         initial_capital: float | None = None,
         reset_hour_utc: int = 0,
     ) -> None:
+        if (
+            isinstance(reset_hour_utc, bool)
+            or not isinstance(reset_hour_utc, int)
+            or not 0 <= reset_hour_utc <= 23
+        ):
+            raise ConfigurationError(
+                "challenge reset hour must be an integer between 0 and 23"
+            )
         self.profile = profile
         self.initial_capital = (
             initial_capital if initial_capital is not None else profile.initial_capital
         )
         self.reset_hour_utc = reset_hour_utc
+        self.events: list[dict[str, Any]] = []
         self.state = ChallengeState.READY
         self.step_index = 0
         self.trading_days = 0
@@ -124,6 +186,7 @@ class ChallengeEngine:
         self.max_daily_loss = 0.0
         self.max_total_loss = 0.0
         self.current_day_key: int | None = None
+        self.ignored_observations = 0
         self._day_start_balance: float = self.initial_capital
         self._day_start_equity: float = self.initial_capital
         self._day_peak_equity: float = self.initial_capital
@@ -131,13 +194,36 @@ class ChallengeEngine:
         self._last_balance: float = self.initial_capital
         self._last_equity: float = self.initial_capital
         self._last_ts_ns: int = 0
-        self._reasons: list[str] = []
+        self._last_signature: tuple[int, float, float] | None = None
+        self._failures: list[FailureRecord] = []
+        self._passed = False
+        self._finalized = False
 
     # -- observation ---------------------------------------------------
     def observe(self, ts_ns: int, account: AccountState) -> None:
-        """Enregistre un etat du compte et met a jour le suivi du challenge."""
+        """Enregistre un etat du compte et met a jour le suivi du challenge.
+
+        Cette methode est la seule a faire progresser l'etat. Elle est
+        idempotente pour une observation identique (meme horodatage, memes
+        valeurs) et ignore les observations en retard ou contradictoires au
+        lieu de produire un etat dependant de l'ordre d'arrivee.
+        """
         if self.state is ChallengeState.READY:
             self.state = ChallengeState.RUNNING
+
+        signature = (int(ts_ns), float(account.balance), float(account.equity))
+
+        if self._last_ts_ns and ts_ns < self._last_ts_ns:
+            # Evenement en retard : il ne peut plus modifier un etat deja vu.
+            self.ignored_observations += 1
+            return
+        if signature == self._last_signature:
+            # Observation dupliquee : aucun effet supplementaire.
+            return
+        if self._last_signature is not None and ts_ns == self._last_ts_ns:
+            # Deux etats differents au meme instant : le premier fait foi.
+            self.ignored_observations += 1
+            return
 
         day_key = self._day_key(ts_ns)
         if self.current_day_key is None:
@@ -160,6 +246,7 @@ class ChallengeEngine:
             self._day_realized_pnl = 0.0
 
         self._last_ts_ns = ts_ns
+        self._last_signature = signature
         self._last_balance = account.balance
         self._last_equity = account.equity
         self._day_peak_equity = max(self._day_peak_equity, account.equity)
@@ -167,27 +254,42 @@ class ChallengeEngine:
         drawdown = self.peak_equity - account.equity
         self.max_drawdown = max(self.max_drawdown, drawdown)
 
+        self._update_loss_tracking()
+        self._maybe_advance_step()
+
+    def drain_events(self) -> list[dict[str, Any]]:
+        """Return and clear the transitions recorded since the last call."""
+        events = self.events
+        self.events = []
+        return events
+
     def finalize(self) -> None:
         """Cloture de la journee en cours a la fin du replay.
 
         Sans cet appel, la derniere journee de la campagne ne serait pas
         comptee : le nombre de jours de trading et de jours profitables serait
-        sous-estime d'un jour.
+        sous-estime d'un jour. L'appel est idempotent.
         """
-        if self.current_day_key is None:
+        if self.current_day_key is None or self._finalized:
             return
-        if self.state is ChallengeState.RUNNING:
-            self.trading_days += 1
-            self._day_realized_pnl = self._last_balance - self._day_start_balance
-            if self._day_realized_pnl > 0:
-                self.profitable_days += 1
+        self._finalized = True
+        # La derniere journee existe, qu'elle ait echoue, reussi ou soit en
+        # cours : elle est comptee pour le rapport. Cela ne retire jamais un
+        # echec terminal deja enregistre.
+        self.trading_days += 1
+        self._day_realized_pnl = self._last_balance - self._day_start_balance
+        if self._day_realized_pnl > 0:
+            self.profitable_days += 1
+        # La journee finalisee peut etre celle qui apporte le dernier jour
+        # profitable requis : une seule etape peut alors etre validee.
+        self._maybe_advance_step()
 
     def _day_key(self, ts_ns: int) -> int:
         """Cle de journee, decalee par l'heure de reinitialisation du profil."""
         offset = self.reset_hour_utc * 3_600_000_000_000
         return (ts_ns - offset) // NANOSECONDS_PER_DAY
 
-    # -- evaluations ---------------------------------------------------
+    # -- suivi des pertes ----------------------------------------------
     def _daily_loss_balance(self) -> float:
         """Perte de la journee, lecture statique (solde)."""
         return max(0.0, self._day_start_balance - self._last_balance)
@@ -202,12 +304,131 @@ class ChallengeEngine:
     def _total_loss_equity(self) -> float:
         return max(0.0, self.profile.reference_capital - self._last_equity)
 
+    def _update_loss_tracking(self) -> None:
+        """Met a jour les maxima de perte et enregistre les violations fatales.
+
+        Les maxima sont mis a jour a chaque observation, y compris apres un
+        echec terminal : une recuperation ne reecrit pas l'histoire. En
+        revanche, une violation deja enregistree n'est jamais retiree.
+        """
+        daily = {
+            "balance_static": self._daily_loss_balance(),
+            "equity_trailing": self._daily_loss_equity(),
+        }
+        total = {
+            "balance_static": self._total_loss_balance(),
+            "equity_trailing": self._total_loss_equity(),
+        }
+        self.max_daily_loss = max(self.max_daily_loss, *daily.values())
+        self.max_total_loss = max(self.max_total_loss, *total.values())
+
+        if self._failures:
+            return
+
+        limits = self.profile.limits
+        for basis, amount in daily.items():
+            if amount >= limits.max_daily_loss_amount:
+                failure = FailureRecord(
+                    kind="daily_loss",
+                    basis=basis,
+                    amount=amount,
+                    limit=limits.max_daily_loss_amount,
+                    ts_ns=self._last_ts_ns,
+                    step_index=self.step_index,
+                )
+                self._failures.append(failure)
+                self.events.append({"kind": "failure", "failure": failure.to_dict()})
+        for basis, amount in total.items():
+            if amount >= limits.max_total_loss_amount:
+                failure = FailureRecord(
+                    kind="total_loss",
+                    basis=basis,
+                    amount=amount,
+                    limit=limits.max_total_loss_amount,
+                    ts_ns=self._last_ts_ns,
+                    step_index=self.step_index,
+                )
+                self._failures.append(failure)
+                self.events.append({"kind": "failure", "failure": failure.to_dict()})
+
+    def _failed_or_passed(self) -> bool:
+        return bool(self._failures) or self._passed
+
+    def _maybe_advance_step(self) -> None:
+        """Valide au plus une etape, uniquement sur une observation nouvelle."""
+        if self._failed_or_passed():
+            return
+        step = self.profile.current_step(self.step_index)
+        profit = self._last_equity - step.reference_capital
+        if profit < step.profit_target_amount:
+            return
+        if self.profitable_days < step.min_profitable_days:
+            return
+        if self.step_index + 1 < len(self.profile.steps):
+            self.step_index += 1
+            self.events.append(
+                {
+                    "kind": "step_advanced",
+                    "ts_ns": self._last_ts_ns,
+                    "steps_completed": self.step_index,
+                    "step_index": self.profile.current_step(self.step_index).index,
+                }
+            )
+        else:
+            self._passed = True
+            self.events.append(
+                {
+                    "kind": "passed",
+                    "ts_ns": self._last_ts_ns,
+                    "steps_completed": len(self.profile.steps),
+                }
+            )
+
+    # -- evaluations (lecture pure) ------------------------------------
+    def _progress_state(
+        self, include_failure: bool = True
+    ) -> tuple[ChallengeState, str]:
+        """Etat de progression courant, sans mutation."""
+        if include_failure and self._failures:
+            return ChallengeState.FAILED, self._failure_reason(self._failures[0])
+        if self._passed:
+            step = self.profile.current_step(len(self.profile.steps) - 1)
+            return (
+                ChallengeState.PASSED,
+                f"all steps validated (target {step.profit_target_amount:.2f} reached)",
+            )
+        step = self.profile.current_step(self.step_index)
+        target = step.reference_capital + step.profit_target_amount
+        profit = self._last_equity - step.reference_capital
+        if profit >= step.profit_target_amount:
+            missing = step.min_profitable_days - self.profitable_days
+            return (
+                ChallengeState.RUNNING,
+                f"step {step.index} profit target reached, "
+                f"{missing} profitable day(s) still required",
+            )
+        return (
+            ChallengeState.RUNNING,
+            f"step {step.index} in progress: {profit:.2f} / "
+            f"{step.profit_target_amount:.2f} ({target:.2f} equity required)",
+        )
+
+    def _failure_reason(self, failure: FailureRecord) -> str:
+        label = "daily loss" if failure.kind == "daily_loss" else "total loss"
+        return (
+            f"terminal {label} failure ({failure.basis} reading) at ts "
+            f"{failure.ts_ns}: {failure.amount:.2f} reached the limit "
+            f"{failure.limit:.2f}; the failure is final and cannot be cleared "
+            f"by a later recovery"
+        )
+
     def _evaluate_interpretation(
         self, interpretation_id: str, daily_loss: float, total_loss: float
     ) -> InterpretationResult:
         limits = self.profile.limits
         daily_breach = daily_loss >= limits.max_daily_loss_amount
         total_breach = total_loss >= limits.max_total_loss_amount
+        progress_state, progress_reason = self._progress_state(include_failure=False)
 
         if daily_breach:
             state = ChallengeState.FAILED
@@ -222,7 +443,8 @@ class ChallengeEngine:
                 f"{limits.max_total_loss_amount:.2f}"
             )
         else:
-            state, reason = self._evaluate_progress()
+            state = progress_state
+            reason = progress_reason
 
         return InterpretationResult(
             interpretation_id=interpretation_id,
@@ -234,38 +456,9 @@ class ChallengeEngine:
             reason=reason,
         )
 
-    def _evaluate_progress(self) -> tuple[ChallengeState, str]:
-        """Verdict de progression, independant de la lecture des limites."""
-        step = self.profile.current_step(self.step_index)
-        target = step.reference_capital + step.profit_target_amount
-        profit = self._last_equity - step.reference_capital
-        if profit >= step.profit_target_amount:
-            if self.profitable_days >= step.min_profitable_days:
-                if self.step_index + 1 < len(self.profile.steps):
-                    self.step_index += 1
-                    return (
-                        ChallengeState.RUNNING,
-                        f"step {step.index} validated, moving to step {self.step_index + 1}",
-                    )
-                return (
-                    ChallengeState.PASSED,
-                    f"all steps validated (target {step.profit_target_amount:.2f} reached)",
-                )
-            missing = step.min_profitable_days - self.profitable_days
-            return (
-                ChallengeState.RUNNING,
-                f"step {step.index} profit target reached, "
-                f"{missing} profitable day(s) still required",
-            )
-        return (
-            ChallengeState.RUNNING,
-            f"step {step.index} in progress: {profit:.2f} / "
-            f"{step.profit_target_amount:.2f} ({target:.2f} equity required)",
-        )
-
     # -- verdict --------------------------------------------------------
     def evaluate(self) -> ChallengeVerdict:
-        """Produit le verdict du challenge."""
+        """Produit le verdict du challenge (lecture pure, idempotente)."""
         reasons: list[str] = []
         assumptions: list[str] = []
 
@@ -294,7 +487,9 @@ class ChallengeEngine:
             ),
         ]
 
-        # Le verdict le plus defavorable l'emporte.
+        # Le verdict le plus defavorable l'emporte. Une violation terminale
+        # enregistree reste FAILED meme si les lectures courantes sont revenues
+        # sous les limites.
         order = {
             ChallengeState.FAILED: 0,
             ChallengeState.INVALID: 1,
@@ -305,15 +500,22 @@ class ChallengeEngine:
         indicative = min(
             (i.state for i in interpretations), key=lambda s: order[s]
         )
+        if self._failures:
+            indicative = ChallengeState.FAILED
+        elif self._passed:
+            indicative = ChallengeState.PASSED
+
+        for failure in self._failures:
+            reasons.append(self._failure_reason(failure))
+
         for interpretation in interpretations:
             # La raison de l'interpretation la plus restrictive est toujours
-            # rapportee ; les autres ne le sont que si elles different.
-            if interpretation.state is indicative or interpretation.reason:
-                if interpretation.state is not indicative:
-                    reasons.append(
-                        f"interpretation {interpretation.interpretation_id}: "
-                        f"{interpretation.reason}"
-                    )
+            # rapportee ; les autres ne le sont que si elles divergent.
+            if interpretation.state is not indicative and interpretation.state is not ChallengeState.FAILED:
+                reasons.append(
+                    f"interpretation {interpretation.interpretation_id}: "
+                    f"{interpretation.reason}"
+                )
 
         # Le verdict officiel exige un profil verifiable.
         if not self.profile.allows_conclusion:
@@ -337,7 +539,7 @@ class ChallengeEngine:
         )
         if indicative_result is not None and indicative_result.reason:
             reasons.insert(
-                0,
+                0 if not self._failures else len(self._failures),
                 f"interpretation {indicative_result.interpretation_id}: "
                 f"{indicative_result.reason}",
             )
@@ -351,7 +553,9 @@ class ChallengeEngine:
             indicative_state=indicative,
             reasons=reasons,
             step_index=step.index,
-            steps_completed=self.step_index,
+            steps_completed=(
+                len(self.profile.steps) if self._passed else self.step_index
+            ),
             daily_pnl=self._last_equity - self._day_start_equity,
             total_pnl=self._last_equity - self.initial_capital,
             max_daily_loss=self.max_daily_loss,
@@ -371,6 +575,9 @@ class ChallengeEngine:
             ),
             interpretations=interpretations,
             assumptions=assumptions,
+            failures=list(self._failures),
+            ignored_observations=self.ignored_observations,
+            model_limits=[MODEL_LIMIT_INTRABAR],
         )
 
     # -- garde-fou pour le RiskGovernor --------------------------------

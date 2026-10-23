@@ -5,7 +5,7 @@ simulation conforme
 **Date de vérification :** 2026-10-22
 **Source :** pages officielles The5ers, relevées par le chef de projet
 **Fichier de profil associé :**
-`configs/prop_firms/the5ers_high_stakes_new_2500.draft.yaml`
+`configs/prop_firms/the5ers_high_stakes_new_2500.draft.toml`
 
 > **Règle appliquée (CDC, Mission 7 et principe 4).** Aucune règle de
 > challenge n'est supposée ni laissée implicite. Les paramètres ci-dessous
@@ -61,7 +61,7 @@ ou confirmées par écrit.
 | V1 | **Méthode de calcul de la perte quotidienne** : sur le solde (statique) ou sur l'equity (trailing) ? | change le verdict d'une campagne entière | les deux interprétations sont évaluées, **la plus restrictive l'emporte** (voir §5) |
 | V2 | **Heure et fuseau de réinitialisation** du compteur quotidien | détermine le rattachement d'une perte à une journée | hypothèse explicite à documenter dans le rapport, ou règle refusée |
 | V3 | **Définition d'un « jour profitable »** (PnL > 0 net de frais sur la journée ? sur l'equity ?) | condition de validation des deux étapes | compte conservatrice : PnL réalisé net > 0 |
-| V4 | **Traitement des frais** de 19 USD : déduits du capital de référence, ou facturés à part ? | modifie la base de calcul de toutes les limites | hypothèse la plus défavorable retenue : capital de référence = 2 500 − 19 |
+| V4 | **Traitement des frais** de 19 USD : déduits du capital de référence, ou facturés à part ? | modifie la base de calcul de toutes les limites | **non tranché** : le brouillon conserve 2 500 USD (les cibles affichées 250/125 en découlent). La variante 2 481 USD n'est pas simulée ; limitation documentée, ce profil ne peut produire aucun verdict |
 | V5 | **Report entre les étapes** : le capital de l'étape 2 est-il 2 500 USD ou 2 750 USD (objectif 1 atteint) ? | change les seuils de l'étape 2 | hypothèse : capital de référence de l'étape 2 = 2 500 USD (le plus restrictif) |
 | V6 | **Ouverture simultanée de positions** et consolidation des pertes | peut agréger des pertes au-delà de la limite quotidienne | hypothèse la plus restrictive : agrégation de toutes les positions du compte |
 | V7 | **Heures de trading / news trading** restrictions éventuelles | peut interdire des engagements | filtre configurable, non activé tant que la règle n'est pas connue |

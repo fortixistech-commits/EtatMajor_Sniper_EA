@@ -141,6 +141,172 @@ def test_the_cli_refuses_a_malformed_dataset(tmp_path):
     assert "duplicated timestamp" in completed.stderr
 
 
+def test_cockpit_command_renders_the_repository_evidence(tmp_path):
+    report_path = REPO_ROOT / "artifacts" / "example_report.json"
+    journal_path = REPO_ROOT / "artifacts" / "example_journal.jsonl"
+    if not report_path.exists() or not journal_path.exists():  # pragma: no cover
+        pytest.skip("example evidence not generated yet")
+
+    html_path = tmp_path / "cockpit.html"
+    json_path = tmp_path / "cockpit.json"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "etatmajor.cli",
+            "cockpit",
+            "--report",
+            str(report_path),
+            "--journal",
+            str(journal_path),
+            "--html",
+            str(html_path),
+            "--json",
+            str(json_path),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert "Status        : PASS" in completed.stdout
+
+    dashboard = html_path.read_text(encoding="utf-8")
+    assert dashboard.startswith("<!doctype html>")
+    assert "CONFORME" in dashboard
+    assert "<script" not in dashboard.lower()
+
+    snapshot = json.loads(json_path.read_text(encoding="utf-8"))
+    assert snapshot["ok"] is True
+    assert snapshot["journal_provided"] is True
+    assert snapshot["event_counts"]["REPLAY_FINISHED"] == 1
+
+
+def test_cockpit_refuses_tampered_evidence(tmp_path):
+    report_path = REPO_ROOT / "artifacts" / "example_report.json"
+    if not report_path.exists():  # pragma: no cover
+        pytest.skip("example report not generated yet")
+
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report["account"]["net_pnl"] += 1.0
+    tampered = tmp_path / "tampered.json"
+    tampered.write_text(json.dumps(report), encoding="utf-8")
+
+    html_path = tmp_path / "tampered.html"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "etatmajor.cli",
+            "cockpit",
+            "--report",
+            str(tampered),
+            "--html",
+            str(html_path),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
+        check=False,
+    )
+    assert completed.returncode == 3
+    assert "REPORT_FINGERPRINT_MISMATCH" in completed.stdout
+    assert "NON CONFORME" in html_path.read_text(encoding="utf-8")
+
+
+def test_cockpit_strict_mode_refuses_a_missing_journal(tmp_path):
+    report_path = REPO_ROOT / "artifacts" / "example_report.json"
+    if not report_path.exists():  # pragma: no cover
+        pytest.skip("example report not generated yet")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "etatmajor.cli",
+            "cockpit",
+            "--report",
+            str(report_path),
+            "--strict",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
+        check=False,
+    )
+    assert completed.returncode == 3
+    assert "JOURNAL_NOT_PROVIDED" in completed.stdout
+
+
+def test_evaluate_command_builds_a_validation_dossier(tmp_path):
+    report_path = REPO_ROOT / "artifacts" / "example_report.json"
+    if not report_path.exists():  # pragma: no cover
+        pytest.skip("example report not generated yet")
+
+    json_path = tmp_path / "dossier.json"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "etatmajor.cli",
+            "evaluate",
+            "--report",
+            str(report_path),
+            "--criteria",
+            str(REPO_ROOT / "configs" / "validation.toml"),
+            "--iterations",
+            "50",
+            "--json",
+            str(json_path),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr + completed.stdout
+    assert "Verdict      : PASS" in completed.stdout
+
+    dossier = json.loads(json_path.read_text(encoding="utf-8"))
+    assert dossier["verdict"] == "PASS"
+    assert dossier["criteria_fingerprint"]
+    assert dossier["robustness"]["monte_carlo"]["status"] == "INSUFFICIENT_DATA"
+
+
+def test_select_command_ranks_candidates_under_one_protocol(tmp_path):
+    report_path = REPO_ROOT / "artifacts" / "example_report.json"
+    if not report_path.exists():  # pragma: no cover
+        pytest.skip("example report not generated yet")
+
+    json_path = tmp_path / "selection.json"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "etatmajor.cli",
+            "select",
+            "--report",
+            f"sample={report_path}",
+            "--criteria",
+            str(REPO_ROOT / "configs" / "validation.toml"),
+            "--iterations",
+            "20",
+            "--json",
+            str(json_path),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr + completed.stdout
+    assert "Selected     : sample" in completed.stdout
+
+    selection = json.loads(json_path.read_text(encoding="utf-8"))
+    assert selection["selected"] == "sample"
+    assert selection["candidates"][0]["verdict"] == "PASS"
+
 def test_the_repository_shipped_example_report_is_consistent():
     """The committed example report matches a fresh run of the same command."""
     example = REPO_ROOT / "artifacts" / "example_report.json"

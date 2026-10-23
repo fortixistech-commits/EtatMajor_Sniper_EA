@@ -50,6 +50,7 @@ class Portfolio:
         self.positions: dict[str, Position] = {}
         self.mark_prices: dict[str, float] = {}
         self.trade_count = 0
+        self._flat_snapshot: PortfolioSnapshot | None = None
 
     # -- positions ----------------------------------------------------
     def position(self, symbol: str) -> Position:
@@ -103,6 +104,7 @@ class Portfolio:
         self.fees += fill.commission
         self.cash -= fill.commission
         self.trade_count += 1
+        self._flat_snapshot = None
         return position
 
     def mark(self, symbol: str, price: float) -> None:
@@ -134,7 +136,14 @@ class Portfolio:
         return self.equity - self.initial_capital
 
     def snapshot(self) -> PortfolioSnapshot:
-        """Immutable snapshot handed to strategies and the risk authority."""
+        """Immutable snapshot handed to strategies and the risk authority.
+
+        A flat portfolio is invariant between fills: the same immutable
+        snapshot is returned instead of rebuilding a tuple of dictionaries on
+        every bar. Any fill invalidates the cache.
+        """
+        if self._flat_snapshot is not None:
+            return self._flat_snapshot
         unrealized = self.compute_unrealized()
         positions = tuple(
             {
@@ -147,7 +156,7 @@ class Portfolio:
             }
             for symbol, position in sorted(self.positions.items())
         )
-        return PortfolioSnapshot(
+        snapshot = PortfolioSnapshot(
             initial_capital=self.initial_capital,
             cash=self.cash,
             equity=self.cash + unrealized,
@@ -157,6 +166,9 @@ class Portfolio:
             net_pnl=self.cash + unrealized - self.initial_capital,
             positions=positions,
         )
+        if all(position.is_flat for position in self.positions.values()):
+            self._flat_snapshot = snapshot
+        return snapshot
 
     def account_state(self, ts_ns: int, account_id: str = "ACCOUNT-001") -> AccountState:
         """Etat du compte (solde, equity, marge) a l'instant ``ts_ns``."""

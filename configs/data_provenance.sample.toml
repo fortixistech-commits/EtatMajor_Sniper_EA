@@ -1,0 +1,17 @@
+# Provenance du jeu de donnees d'exemple du depot.
+# Ce jeu est synthetique : il sert aux tests du pipeline, pas a une
+# evaluation de performance.
+
+[provenance]
+source_name = "repository synthetic sample"
+source_uri = "https://github.com/fortixistech-commits/EtatMajor_Sniper_EA"
+retrieved_at_utc = "2026-10-22T00:00:00Z"
+timezone = "UTC"
+granularity = "1m"
+version = "1.0.0"
+adjustments = "none"
+is_synthetic = true
+limitations = [
+  "Synthetic prices generated for pipeline tests, not real market data.",
+  "Weekends, holidays and trading sessions are not modelled.",
+]

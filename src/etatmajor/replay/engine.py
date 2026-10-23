@@ -28,8 +28,10 @@ from ..core.session import SessionIdentity, build_session_identity
 from ..core.errors import ExecutionError, StrategyError
 from ..core.types import EventType, OrderSide, OrderStatus, OrderType, SignalAction
 from ..data.loader import Dataset
+from ..data.instruments import BrokerSymbolSpec, InstrumentSpec
 from ..execution.accounting import Portfolio
 from ..execution.broker import SimulatedBroker
+from ..execution.reconciliation import ReconciliationReport, reconcile
 from ..risk.governor import MinimalRiskGovernor, OrderRequest, RiskGovernor
 from ..challenge.engine import ChallengeEngine
 from ..strategies.base import Strategy, StrategyContext, VisibleBars
@@ -48,6 +50,7 @@ class ReplayResult:
     fills: list[Fill] = field(default_factory=list)
     risk_rejections: list[dict] = field(default_factory=list)
     broker_rejections: list[dict] = field(default_factory=list)
+    equity_curve: list[tuple[int, float]] = field(default_factory=list)
 
 
 class ReplayEngine:
@@ -62,6 +65,8 @@ class ReplayEngine:
         broker: SimulatedBroker | None = None,
         journal: Journal | None = None,
         challenge: "ChallengeEngine | None" = None,
+        instrument: InstrumentSpec | None = None,
+        broker_spec: BrokerSymbolSpec | None = None,
     ) -> None:
         config.validate()
         if not dataset.bars:
@@ -75,7 +80,10 @@ class ReplayEngine:
             config.risk, challenge=challenge
         )
         self.broker = broker or SimulatedBroker(
-            config.execution, seed=config.simulation.seed
+            config.execution,
+            seed=config.simulation.seed,
+            instrument=instrument,
+            broker_spec=broker_spec,
         )
         self.journal = journal or Journal()
         self.portfolio = Portfolio(
@@ -86,6 +94,8 @@ class ReplayEngine:
         self.broker_rejections: list[dict] = []
         self.expired_signals: int = 0
         self.session: SessionIdentity | None = None
+        self.reconciliation: ReconciliationReport | None = None
+        self.equity_curve: list[tuple[int, float]] = []
 
     # -- main loop ----------------------------------------------------
     def run(self) -> ReplayResult:
@@ -105,6 +115,9 @@ class ReplayEngine:
         )
 
         bars = self.dataset.bars
+        self.equity_curve = [
+            (bars[0].ts_open_ns, float(self.config.simulation.initial_capital))
+        ]
         self.session = build_session_identity(
             strategy_id=getattr(self.strategy, "strategy_id", "unknown"),
             strategy_version=getattr(self.strategy, "strategy_version", "unknown"),
@@ -127,12 +140,21 @@ class ReplayEngine:
             self._process_bar_close(index, bar)
 
         self._finish_replay()
-        if self.challenge is not None:
-            self.challenge.finalize()
+        self._record_final_equity(bars[-1].ts_close_ns)
         self._call_on_stop(bars)
+        self._finalize_challenge()
+        self._write_replay_finished()
         return self._build_result()
 
     # -- steps --------------------------------------------------------
+    def _record_final_equity(self, ts_ns: int) -> None:
+        """Record the post-policy equity without duplicating a timestamp."""
+        point = (int(ts_ns), self.portfolio.equity)
+        if self.equity_curve and self.equity_curve[-1][0] == ts_ns:
+            self.equity_curve[-1] = point
+        else:
+            self.equity_curve.append(point)
+
     def _call_on_start(self, bars) -> None:
         """Notify the strategy before the first bar.
 
@@ -265,6 +287,7 @@ class ReplayEngine:
     def _process_bar_close(self, index: int, bar) -> None:
         self.clock = self.clock.advance_to(bar.ts_close_ns)
         self.portfolio.mark(self.dataset.symbol, bar.close)
+        self.equity_curve.append((bar.ts_close_ns, self.portfolio.equity))
 
         context = StrategyContext(
             index=index,
@@ -293,6 +316,7 @@ class ReplayEngine:
             self.challenge.observe(
                 self.clock.now(), self.portfolio.account_state(self.clock.now())
             )
+            self._journal_challenge_events()
 
         for signal in signals:
             self._handle_signal(signal, bar, index)
@@ -478,15 +502,61 @@ class ReplayEngine:
                     },
                 )
 
+        self.reconciliation = reconcile(
+            self.broker.orders, self.broker.fills, self.portfolio
+        )
         self.journal.append(
             self.clock.now(),
+            EventType.RECONCILIATION.value,
+            self.reconciliation.to_dict(),
+        )
+        if not self.reconciliation.reconciled:
+            details = "; ".join(
+                f"{issue.code}: {issue.detail}"
+                for issue in self.reconciliation.issues
+            )
+            raise ExecutionError(f"execution reconciliation failed: {details}")
+
+    def _journal_challenge_events(self) -> None:
+        if self.challenge is None:
+            return
+        for event in self.challenge.drain_events():
+            self.journal.append(
+                self.clock.now(), EventType.CHALLENGE_EVENT.value, event
+            )
+
+    def _finalize_challenge(self) -> None:
+        """Observe the post-liquidation account, then close the challenge."""
+        if self.challenge is None:
+            return
+        # Le verdict doit porter sur l'etat *post-liquidation* : la politique
+        # de fin de replay peut clore une position et changer le solde (et
+        # donc les limites). L'horodatage doit etre strictement posterieur a
+        # la derniere observation, sinon une observation contradictoire au
+        # meme instant est ignoree (protection anti-rejeu).
+        ts_ns = self.clock.now() + 1
+        self.clock = self.clock.advance_to(ts_ns)
+        self.challenge.observe(ts_ns, self.portfolio.account_state(ts_ns))
+        self.challenge.finalize()
+        self._journal_challenge_events()
+        self.journal.append(
+            ts_ns,
+            EventType.CHALLENGE_FINALIZED.value,
+            {"verdict": self.challenge.evaluate().to_dict()},
+        )
+
+    def _write_replay_finished(self) -> None:
+        policy = self.config.simulation.end_of_replay_policy
+        now = self.clock.now()
+        self.journal.append(
+            now,
             EventType.REPLAY_FINISHED.value,
             {
                 "end_of_replay_policy": policy.value,
                 "equity": self.portfolio.equity,
                 "net_pnl": self.portfolio.net_pnl,
-                "account": self.portfolio.account_state(self.clock.now()).to_dict(),
-                "portfolio": self.portfolio.portfolio_state(self.clock.now()).to_dict(),
+                "account": self.portfolio.account_state(now).to_dict(),
+                "portfolio": self.portfolio.portfolio_state(now).to_dict(),
                 "executions": [
                     event.to_dict() for event in self.broker.execution_events()
                 ],
@@ -599,6 +669,8 @@ class ReplayEngine:
             journal=self.journal,
             session=self.session.to_dict() if self.session else None,
             challenge=self.challenge,
+            reconciliation=self.reconciliation,
+            equity_curve=self.equity_curve,
         )
         return ReplayResult(
             report=report,
@@ -609,4 +681,5 @@ class ReplayEngine:
             fills=list(self.broker.fills),
             risk_rejections=list(self.risk_rejections),
             broker_rejections=list(self.broker_rejections),
+            equity_curve=list(self.equity_curve),
         )

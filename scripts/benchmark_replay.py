@@ -5,15 +5,18 @@ un composant MQL5 serait justifié. Le cahier des routes impose de ne
 recourir à une optimisation qu'après **mesure** d'un goulot d'étranglement
 réel.
 
-La mesure porte sur trois profils :
+La mesure porte sur quatre profils :
 
 1. le dataset d'exemple (240 bougies) ;
 2. un volume de travail (5 000 bougies) ;
-3. un volume important (20 000 bougies).
+3. un volume important (20 000 bougies) ;
+4. un volume de campagne (100 000 bougies).
 
-Les volumes de 100 000 et 1 000 000 bougies ont ete abandonnes : le temps de
-rejeu croît de façon quadratique (voir AUDIT-Q1), ce qui rend ces profils
-inutilisables en l'etat.
+Le coût par bougie du moteur de replay est linéaire depuis la mise en cache
+des instantanés d'un portefeuille à plat (Phase 7). Le Sniper Engine n'est
+pas inclus dans ce profil : son Market Intelligence recalcule ses indicateurs
+sur tout l'historique visible à chaque bougie, ce qui reste quadratique et
+doit être optimisé avant un benchmark de campagne (limite documentée).
 
 Pour chaque profil : temps d'exécution, débit (bougies/s), temps de
 chargement des données, mémoire maximale (RSS).
@@ -27,8 +30,13 @@ from __future__ import annotations
 
 import argparse
 import json
-import resource
+import platform
+import sys
 import time
+try:
+    import resource
+except ImportError:  # Windows
+    resource = None
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -80,8 +88,43 @@ def build_dataset(bars: int) -> Dataset:
     )
 
 
-def rss_mb() -> float:
-    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
+def rss_mb() -> float | None:
+    """Pic de memoire residente (portable Linux/macOS/Windows)."""
+    if resource is not None:
+        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
+    if sys.platform == "win32":
+        import ctypes
+        from ctypes import wintypes
+
+        class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
+            _fields_ = [
+                ("cb", wintypes.DWORD),
+                ("PageFaultCount", wintypes.DWORD),
+                ("PeakWorkingSetSize", ctypes.c_size_t),
+                ("WorkingSetSize", ctypes.c_size_t),
+                ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                ("PagefileUsage", ctypes.c_size_t),
+                ("PeakPagefileUsage", ctypes.c_size_t),
+            ]
+
+        counters = PROCESS_MEMORY_COUNTERS()
+        counters.cb = ctypes.sizeof(PROCESS_MEMORY_COUNTERS)
+        kernel32 = ctypes.windll.kernel32
+        kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+        handle = kernel32.GetCurrentProcess()
+        psapi = ctypes.windll.psapi
+        psapi.GetProcessMemoryInfo.argtypes = [
+            wintypes.HANDLE,
+            ctypes.POINTER(PROCESS_MEMORY_COUNTERS),
+            wintypes.DWORD,
+        ]
+        psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
+        if psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb):
+            return counters.PeakWorkingSetSize / (1024.0 * 1024.0)
+    return None
 
 
 def run_profile(bars: int) -> dict:
@@ -103,6 +146,7 @@ def run_profile(bars: int) -> dict:
     start = time.perf_counter()
     result = engine.run()
     elapsed = time.perf_counter() - start
+    rss = rss_mb()
     return {
         "bars": bars,
         "build_seconds": round(build_seconds, 4),
@@ -111,7 +155,7 @@ def run_profile(bars: int) -> dict:
         "microseconds_per_bar": round(elapsed / bars * 1e6, 3),
         "orders": result.report["orders"]["total"],
         "executions": result.report["executions"]["total"],
-        "max_rss_mb": round(rss_mb(), 1),
+        "max_rss_mb": round(rss, 1) if rss is not None else None,
     }
 
 
@@ -120,7 +164,7 @@ def main() -> int:
     parser.add_argument("--output", default="docs/audit/evidence")
     parser.add_argument(
         "--profiles",
-        default="240,5000,10000,20000",
+        default="240,5000,20000,100000",
         help="comma separated bar counts",
     )
     args = parser.parse_args()
@@ -136,13 +180,17 @@ def main() -> int:
             f"{bars:>9,} bars | replay {profile['replay_seconds']:>8.3f}s | "
             f"{profile['bars_per_second']:>10,} bars/s | "
             f"{profile['microseconds_per_bar']:>8.1f} us/bar | "
-            f"rss {profile['max_rss_mb']:>7.1f} MB"
+            + (
+                f"rss {profile['max_rss_mb']:>7.1f} MB"
+                if profile["max_rss_mb"] is not None
+                else "rss      n/a"
+            )
         )
 
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "python": "3.13.7",
-        "platform": "Linux aarch64",
+        "python": platform.python_version(),
+        "platform": f"{platform.system()} {platform.machine()}",
         "profiles": results,
     }
     (output_dir / "benchmark.json").write_text(

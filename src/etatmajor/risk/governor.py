@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
-
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 from ..core.config import RiskConfig
 from ..core.events import RiskDecision
@@ -13,6 +12,8 @@ from ..core.models import AccountState, AuditEvent
 from ..core.types import OrderSide
 from ..execution.accounting import PortfolioSnapshot
 from .killswitch import KillSwitch
+
+_EPSILON = 1e-9
 
 
 @dataclass(frozen=True)
@@ -66,11 +67,16 @@ class RiskGovernor(Protocol):
 
 
 class MinimalRiskGovernor:
-    """Governor: taille, notionnel, positions, risque par operation, challenge.
+    """Governor: taille, exposition agregee, positions, risque, challenge.
 
     Le contrat reste minimal et injectable : les limites avancees du challenge
     (perte journaliere, perte totale, drawdown) sont appliquees par
     delegation a un moteur de challenge, lorsqu'il est fourni.
+
+    L'exposition est toujours verifiee **apres** l'operation envisagee. Une
+    demande opposee ne reduit l'exposition que pour la quantite qu'elle peut
+    reellement cloturer : un ordre excedentaire qui retourne la position ne
+    beneficie pas du traitement « reduction de risque ».
     """
 
     def __init__(
@@ -84,7 +90,8 @@ class MinimalRiskGovernor:
         self.config = config
         self.challenge = challenge
         self.kill_switch = kill_switch or KillSwitch(
-            config.kill_switch_path if config.kill_switch_path else None
+            config.kill_switch_path if config.kill_switch_path else None,
+            required=config.kill_switch_required,
         )
         self._account_state = account_state
         self.audit: list[AuditEvent] = []
@@ -126,6 +133,29 @@ class MinimalRiskGovernor:
                 ),
             )
 
+        # -- donnees d'entree : toute valeur douteuse est refusee ----------
+        if not request.symbol or not str(request.symbol).strip():
+            return RiskDecision(approved=False, reason="invalid symbol: must not be empty")
+
+        if not _is_finite(request.quantity) or request.quantity <= 0:
+            return RiskDecision(
+                approved=False, reason="invalid quantity: must be strictly positive"
+            )
+
+        if not _is_finite(request.reference_price) or request.reference_price <= 0:
+            return RiskDecision(
+                approved=False,
+                reason="invalid reference price: must be finite and strictly positive",
+            )
+
+        if request.stop_price is not None and (
+            not _is_finite(request.stop_price) or request.stop_price <= 0
+        ):
+            return RiskDecision(
+                approved=False,
+                reason="invalid stop price: must be finite and strictly positive",
+            )
+
         if self.config.require_stop_loss and request.stop_price is None:
             return RiskDecision(
                 approved=False,
@@ -150,11 +180,6 @@ class MinimalRiskGovernor:
             if blocked:
                 return RiskDecision(approved=False, reason=reason)
 
-        if request.quantity <= 0:
-            return RiskDecision(
-                approved=False, reason="invalid quantity: must be strictly positive"
-            )
-
         if request.quantity > self.config.max_position_quantity:
             return RiskDecision(
                 approved=False,
@@ -164,14 +189,23 @@ class MinimalRiskGovernor:
                 ),
             )
 
+        # -- exposition agregee avant / apres l'operation -------------------
+        gross_before, gross_after = _projected_exposure(snapshot, request)
         exposure_limit = self.config.max_leverage * max(0.0, snapshot.equity)
-        if request.notional > exposure_limit:
+        # Une vraie reduction est toujours acceptee (elle diminue le risque).
+        # En revanche un retournement de position, meme s'il reduit
+        # l'exposition brute, rouvre une exposition : il doit tenir dans la
+        # limite. Sinon un ordre excedentaire contournerait le plafond.
+        if (
+            gross_after > exposure_limit + _EPSILON
+            and not _is_pure_reduction(snapshot, request)
+        ):
             return RiskDecision(
                 approved=False,
                 reason=(
-                    f"notional {request.notional:.2f} exceeds the exposure limit "
-                    f"{exposure_limit:.2f} (leverage {self.config.max_leverage} on "
-                    f"equity {snapshot.equity:.2f})"
+                    f"projected gross exposure {gross_after:.2f} exceeds the exposure "
+                    f"limit {exposure_limit:.2f} (leverage {self.config.max_leverage} on "
+                    f"equity {snapshot.equity:.2f}); current exposure {gross_before:.2f}"
                 ),
             )
 
@@ -185,28 +219,84 @@ class MinimalRiskGovernor:
             )
 
         if snapshot.open_positions >= self.config.max_open_positions:
-            if not _reduces_existing_exposure(snapshot, request):
+            if not _is_pure_reduction(snapshot, request):
                 return RiskDecision(
                     approved=False,
                     reason=(
                         f"max open positions reached ({snapshot.open_positions} / "
-                        f"{self.config.max_open_positions})"
+                        f"{self.config.max_open_positions}); only an order that "
+                        f"reduces an existing position is allowed"
                     ),
                 )
 
         return RiskDecision(approved=True, reason="authorized by risk governor")
 
 
-def _reduces_existing_exposure(
+def _is_finite(value: Any) -> bool:
+    try:
+        return math.isfinite(float(value))
+    except (TypeError, ValueError):
+        return False
+
+
+def _position_price(position: dict, fallback: float) -> float:
+    price = position.get("last_price", 0.0)
+    if _is_finite(price) and float(price) > 0:
+        return float(price)
+    return float(fallback)
+
+
+def _projected_exposure(
     snapshot: PortfolioSnapshot, request: OrderRequest
-) -> bool:
-    """``True`` when the request closes part of an existing position."""
+) -> tuple[float, float]:
+    """Exposition brute (avant, apres) si l'ordre est execute.
+
+    Le symbole cible est valorise au prix de reference de la demande ; les
+    autres positions conservent leur dernier prix connu. Une position existante
+    au meme symbole est augmentee, reduite ou retournee selon la quantite
+    signee de la demande.
+    """
+    target_price = float(request.reference_price)
+    signed = float(request.quantity) * request.side.sign
+    gross_before = 0.0
+    gross_after = 0.0
+    target_seen = False
+
     for position in snapshot.positions:
-        if position["symbol"] != request.symbol:
+        quantity = float(position.get("quantity", 0.0))
+        is_target = position.get("symbol") == request.symbol
+        if is_target:
+            target_seen = True
+            price = target_price
+            after = quantity + signed
+            if abs(after) < 1e-12:
+                after = 0.0
+        else:
+            price = _position_price(position, target_price)
+            after = quantity
+        gross_before += abs(quantity) * price
+        gross_after += abs(after) * price
+
+    if not target_seen:
+        gross_after += abs(signed) * target_price
+
+    return gross_before, gross_after
+
+
+def _is_pure_reduction(snapshot: PortfolioSnapshot, request: OrderRequest) -> bool:
+    """``True`` si la demande ne fait que reduire une position existante.
+
+    Une quantite superieure a la position (retournement) n'est pas une pure
+    reduction : elle rouvre une exposition dans l'autre sens.
+    """
+    signed = request.quantity * request.side.sign
+    for position in snapshot.positions:
+        if position.get("symbol") != request.symbol:
             continue
-        quantity = float(position["quantity"])
+        quantity = float(position.get("quantity", 0.0))
         if quantity == 0.0:
             continue
-        if (quantity > 0) != (request.side is OrderSide.BUY):
-            return True
+        if (quantity > 0) == (signed > 0):
+            return False
+        return request.quantity <= abs(quantity) + _EPSILON
     return False

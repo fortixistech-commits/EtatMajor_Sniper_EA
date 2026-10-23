@@ -32,6 +32,7 @@ LAYERS = [
     "sniper",
     "replay",
     "reporting",
+    "evaluation",
     "cli",
 ]
 
@@ -156,7 +157,8 @@ def test_the_layer_order_is_the_documented_one():
     assert LAYERS.index("strategies") < LAYERS.index("sniper")
     assert LAYERS.index("sniper") < LAYERS.index("replay")
     assert LAYERS.index("replay") < LAYERS.index("reporting")
-    assert LAYERS.index("reporting") < LAYERS.index("cli")
+    assert LAYERS.index("reporting") < LAYERS.index("evaluation")
+    assert LAYERS.index("evaluation") < LAYERS.index("cli")
 
 
 def test_core_does_not_depend_on_any_other_layer():

@@ -18,7 +18,7 @@ profile_status = "DRAFT"
 profile_id = "the5ers-high-stakes-new-2500"
 profile_version = "0.1.0-draft"
 verified_on = "2026-10-22"
-verified_by = "chef de projet (relevement des pages officielles)"
+verified_by = "chef de projet (relevement des pages officielles, non verifie contractuellement)"
 
 sources = [
     "https://the5ers.com/high-stakes/",
@@ -43,8 +43,11 @@ duration_note = "Duree maximale illimitee selon la page officielle"
 initial_capital = 2500.0
 reference_capital = 2500.0
 reference_capital_rationale = """
-Les frais affiches de 19 USD sont deduits du capital de reference
-(hypothese la plus restrictive). A confirmer (verrou V4).
+Capital affiche : 2 500 USD. Les frais de 19 USD ne sont PAS deduits dans ce
+brouillon : les objectifs affiches (250 / 125 USD) sont calcules sur 2 500 USD.
+Le traitement des frais reste non resolu (verrou V4). La variante la plus
+restrictive (capital de reference 2 481 USD) n'est pas evaluee par le moteur :
+c'est une limitation explicite de ce profil DRAFT, pas une regle officielle.
 """
 
 [[steps]]

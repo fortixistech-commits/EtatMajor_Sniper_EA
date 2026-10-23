@@ -174,6 +174,7 @@ class RiskConfig:
     require_stop_loss: bool = False
     max_leverage: float = 1.0
     kill_switch_path: str | None = None
+    kill_switch_required: bool = False
 
     def validate(self) -> None:
         if self.max_position_quantity <= 0:
@@ -186,6 +187,72 @@ class RiskConfig:
             raise ConfigurationError("risk.max_risk_per_trade must be >= 0")
         if self.max_leverage <= 0:
             raise ConfigurationError("risk.max_leverage must be > 0")
+        if self.kill_switch_required and not self.kill_switch_path:
+            raise ConfigurationError(
+                "risk.kill_switch_required = true requires risk.kill_switch_path"
+            )
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class SniperConfig:
+    """Parameters of the Sniper doctrine and its mission planner.
+
+    The values are plain scalars so that this module stays independent from
+    the ``sniper`` package. ``sniper.settings`` converts them into the runtime
+    ``DoctrinePolicy`` and ``MissionPlanner`` objects.
+    """
+
+    risk_amount: float = 10.0
+    reward_risk_multiple: float = 2.0
+    volume_step: float = 0.01
+    min_quantity: float = 0.01
+    estimated_cost_per_unit: float = 0.0
+    validity_ns: int | None = None
+    max_duration_ns: int | None = None
+    max_open_positions: int = 1
+    min_confidence: float = 0.0
+    min_setup_quality: float = 0.0
+    require_structure_alignment: bool = False
+    require_htf_alignment: bool = False
+    block_extreme_volatility: bool = False
+    higher_timeframe_factor: int = 4
+    max_missing_ratio: float = 0.10
+
+    def validate(self) -> None:
+        for name in ("risk_amount", "reward_risk_multiple", "volume_step"):
+            if getattr(self, name) <= 0:
+                raise ConfigurationError(f"sniper.{name} must be > 0")
+        if self.min_quantity < 0:
+            raise ConfigurationError("sniper.min_quantity must be >= 0")
+        if self.estimated_cost_per_unit < 0:
+            raise ConfigurationError(
+                "sniper.estimated_cost_per_unit must be >= 0"
+            )
+        if self.validity_ns is not None and self.validity_ns <= 0:
+            raise ConfigurationError("sniper.validity_ns must be > 0 when set")
+        if self.max_duration_ns is not None and self.max_duration_ns <= 0:
+            raise ConfigurationError("sniper.max_duration_ns must be > 0 when set")
+        if self.max_open_positions < 1:
+            raise ConfigurationError("sniper.max_open_positions must be >= 1")
+        for name in (
+            "min_confidence",
+            "min_setup_quality",
+            "max_missing_ratio",
+        ):
+            value = getattr(self, name)
+            if not 0.0 <= value <= 1.0:
+                raise ConfigurationError(f"sniper.{name} must be within [0.0, 1.0]")
+        if isinstance(self.higher_timeframe_factor, bool) or not isinstance(
+            self.higher_timeframe_factor, int
+        ):
+            raise ConfigurationError("sniper.higher_timeframe_factor must be an integer")
+        if self.higher_timeframe_factor < 1:
+            raise ConfigurationError(
+                "sniper.higher_timeframe_factor must be >= 1"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -198,18 +265,21 @@ class AppConfig:
     simulation: SimulationConfig = field(default_factory=SimulationConfig)
     execution: ExecutionConfig = field(default_factory=ExecutionConfig)
     risk: RiskConfig = field(default_factory=RiskConfig)
+    sniper: SniperConfig = field(default_factory=SniperConfig)
     source_path: str | None = None
 
     def validate(self) -> None:
         self.simulation.validate()
         self.execution.validate()
         self.risk.validate()
+        self.sniper.validate()
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "simulation": self.simulation.to_dict(),
             "execution": self.execution.to_dict(),
             "risk": self.risk.to_dict(),
+            "sniper": self.sniper.to_dict(),
         }
 
     def fingerprint(self) -> str:
@@ -261,7 +331,7 @@ def load_config(path: str | Path) -> AppConfig:
     except tomllib.TOMLDecodeError as exc:
         raise ConfigurationError(f"invalid TOML in {source}: {exc}") from exc
 
-    known_sections = {"simulation", "execution", "risk"}
+    known_sections = {"simulation", "execution", "risk", "sniper"}
     unknown = set(payload) - known_sections
     if unknown:
         raise ConfigurationError(
@@ -277,6 +347,7 @@ def load_config(path: str | Path) -> AppConfig:
             ExecutionConfig, payload.get("execution", {}), "execution"
         ),
         risk=_build(RiskConfig, payload.get("risk", {}), "risk"),
+        sniper=_build(SniperConfig, payload.get("sniper", {}), "sniper"),
         source_path=str(source),
     )
     config.validate()

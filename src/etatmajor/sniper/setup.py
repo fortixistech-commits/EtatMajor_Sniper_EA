@@ -16,7 +16,7 @@ from typing import Sequence
 
 from ..core.types import OrderSide
 from ..data.models import Bar
-from .regime import RegimeSnapshot
+from .regime import MarketRegime, RegimeSnapshot
 
 
 @dataclass(frozen=True)
@@ -87,16 +87,23 @@ class PullbackSetupDetector:
         if not regime.is_trending or len(bars) < 3:
             return None
 
-        is_long = regime.regime.value == "TREND_UP"
+        is_long = regime.regime is MarketRegime.TREND_UP
         current = bars[-1]
         previous = bars[-2]
         window = list(bars[-self.pullback_window :])
 
-        # 2. la bougie courante touche la moyenne rapide
+        # 2. la bougie courante touche la moyenne rapide et cloture du bon cote
         ema_fast = regime.ema_fast
         distance_ratio = abs(current.close - ema_fast) / ema_fast if ema_fast else 1.0
         touched = current.low <= ema_fast <= current.high
-        if not touched or distance_ratio > self.max_distance_to_ema_ratio:
+        on_the_right_side = (
+            current.close > ema_fast if is_long else current.close < ema_fast
+        )
+        if (
+            not touched
+            or not on_the_right_side
+            or distance_ratio > self.max_distance_to_ema_ratio
+        ):
             return None
 
         # 3. bougie de reprise
@@ -123,13 +130,35 @@ class PullbackSetupDetector:
             invalidation = pullback_high + buffer
             direction = OrderSide.SELL
 
-        quality = min(1.0, body_ratio) * min(1.0, 1.0 - distance_ratio / max(self.max_distance_to_ema_ratio, 1e-9))
+        quality = max(
+            0.0,
+            min(1.0, body_ratio)
+            * min(
+                1.0,
+                1.0
+                - distance_ratio / max(self.max_distance_to_ema_ratio, 1e-9),
+            ),
+        )
+        touched_bars = 0
+        for bar in reversed(window):
+            interacted = (
+                bar.low <= ema_fast if is_long else bar.high >= ema_fast
+            )
+            if not interacted:
+                break
+            touched_bars += 1
         reasons = (
             "trend confirmed by the regime detector",
             f"pullback touched the ema fast ({distance_ratio:.6f} distance)",
             f"resumption candle body ratio {body_ratio:.3f}",
+            f"{touched_bars} bar(s) interacted with the ema fast",
             f"invalidation at the structural level {invalidation:.5f}",
         )
+
+        if is_long and not invalidation < current.close:
+            return None
+        if not is_long and not invalidation > current.close:
+            return None
 
         return SetupDetection(
             direction=direction,
@@ -139,7 +168,7 @@ class PullbackSetupDetector:
             pullback_low=pullback_low,
             pullback_high=pullback_high,
             distance_to_ema=distance_ratio,
-            bars_in_pullback=len(window),
+            bars_in_pullback=touched_bars,
             quality=quality,
             reasons=reasons,
             data_refs=(f"bar[{current.ts_open_ns}]",),

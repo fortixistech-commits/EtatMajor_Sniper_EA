@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,7 @@ from ..core.models import MarketTick
 from ..data.loader import Dataset
 from ..execution.accounting import Portfolio
 from ..execution.broker import SimulatedBroker
+from .metrics import performance_section
 
 
 def _reject_summary(rejections: list[dict]) -> dict[str, int]:
@@ -44,6 +46,8 @@ def build_report(
     journal: Journal,
     session: dict | None = None,
     challenge: Any | None = None,
+    reconciliation: Any | None = None,
+    equity_curve: list[tuple[int, float]] | None = None,
 ) -> dict:
     """Assemble the report of a replay run."""
     snapshot = portfolio.snapshot()
@@ -59,15 +63,20 @@ def build_report(
     fees = sum(fill.commission for fill in fills)
 
     report: dict[str, Any] = {
-        "schema_version": "1.0",
+        "schema_version": "1.4",
         "project": "ETAT-MAJOR SNIPER EA",
         "session": session or {},
-        "phase": "2",
+        "phase": "9",
         "mode": config.simulation.mode.report_label,
         "simulation_only": True,
         "strategy": {
             "id": getattr(strategy, "strategy_id", "unknown"),
             "version": getattr(strategy, "strategy_version", "unknown"),
+            **{
+                name: getattr(strategy, name)
+                for name in ("abstentions", "engagements")
+                if hasattr(strategy, name)
+            },
         },
         "dataset": {
             **dataset.to_dict(),
@@ -110,6 +119,14 @@ def build_report(
             "currency": config.simulation.currency,
             "positions": [dict(p) for p in snapshot.positions],
         },
+        "performance": performance_section(
+            fills=fills,
+            orders=orders,
+            initial_capital=snapshot.initial_capital,
+            net_pnl=snapshot.net_pnl,
+            fees=snapshot.fees,
+            equity_curve=equity_curve,
+        ),
         "rejections": {
             "risk": _reject_summary(risk_rejections),
             "broker": _reject_summary(broker_rejections),
@@ -118,15 +135,53 @@ def build_report(
         },
         "market": _market_context(dataset, config),
         "challenge": _challenge_section(challenge),
+        "reconciliation": (
+            reconciliation.to_dict()
+            if reconciliation is not None
+            else {"enabled": False}
+        ),
         "end_of_replay_policy": config.simulation.end_of_replay_policy.value,
         "config": config.to_dict(),
         "config_fingerprint": config.fingerprint(),
         "dataset_fingerprint": dataset.fingerprint(),
         "journal_events": len(journal),
+        "observability": _observability_section(journal),
     }
 
-    report["report_fingerprint"] = _fingerprint(report)
+    report["report_fingerprint"] = report_fingerprint(report)
     return report
+
+
+def _observability_section(journal: Journal) -> dict[str, Any]:
+    """Trace compacte et deterministe de l'execution (Phase 8).
+
+    Aucune horloge murale n'est lue : seules les donnees simulees et les
+    evenements deja journalises sont agregees.
+    """
+    entries = journal.entries
+    counts = Counter(entry.type for entry in entries)
+    session_ids = sorted(
+        {
+            str(entry.payload["session_id"])
+            for entry in entries
+            if isinstance(entry.payload, dict) and entry.payload.get("session_id")
+        }
+    )
+    chronological = all(
+        previous.ts_ns <= current.ts_ns
+        for previous, current in zip(entries, entries[1:])
+    )
+    return {
+        "journal_events": len(entries),
+        "event_counts": dict(sorted(counts.items())),
+        "first_ts_ns": entries[0].ts_ns if entries else None,
+        "last_ts_ns": entries[-1].ts_ns if entries else None,
+        "last_event_type": entries[-1].type if entries else None,
+        "replay_started_events": counts.get("REPLAY_STARTED", 0),
+        "replay_finished_events": counts.get("REPLAY_FINISHED", 0),
+        "session_ids": session_ids,
+        "chronological": chronological,
+    }
 
 
 def _challenge_section(challenge: Any | None) -> dict:
@@ -143,6 +198,14 @@ def _challenge_section(challenge: Any | None) -> dict:
         "profile": challenge.profile.to_dict(),
         "verdict": verdict.to_dict(),
     }
+
+
+def _reconciliation_label(section: Any) -> str:
+    if not isinstance(section, dict) or not section.get("enabled", True):
+        return "not run"
+    if section.get("reconciled"):
+        return f"OK ({section.get('fills', 0)} fills)"
+    return f"FAILED ({len(section.get('issues', []))} issue(s))"
 
 
 def _market_context(dataset: Dataset, config: AppConfig) -> dict:
@@ -166,7 +229,7 @@ def _market_context(dataset: Dataset, config: AppConfig) -> dict:
     }
 
 
-def _fingerprint(report: dict) -> str:
+def report_fingerprint(report: dict) -> str:
     """Hash of the report content, excluding the fingerprint field itself."""
     payload = {k: v for k, v in report.items() if k != "report_fingerprint"}
     blob = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
@@ -192,6 +255,11 @@ def render_summary(report: dict) -> str:
     executions = report["executions"]
     rejections = report["rejections"]
     period = report["period"]
+    performance = report.get("performance", {})
+    profit_factor = performance.get("profit_factor")
+    profit_factor_text = (
+        f"{profit_factor:.3f}" if isinstance(profit_factor, (int, float)) else "n/a"
+    )
 
     lines = [
         "=" * 68,
@@ -211,9 +279,16 @@ def render_summary(report: dict) -> str:
         f"Realized PnL    : {account['realized_pnl']:.2f}",
         f"Unrealized PnL  : {account['unrealized_pnl']:.2f}",
         f"Net PnL         : {account['net_pnl']:.2f}",
+        f"Trades          : {performance.get('trades', 0)} "
+        f"(win {performance.get('win_rate_percent', 0.0):.1f}%)",
+        f"Profit factor   : {profit_factor_text}",
+        f"Expectancy      : {performance.get('expectancy', 0.0):+.4f}",
+        f"Max drawdown    : {performance.get('max_drawdown', 0.0):.2f} "
+        f"({performance.get('max_drawdown_percent', 0.0):.2f}%)",
         "-" * 68,
         f"Risk rejections : {rejections['risk_count']} {rejections['risk']}",
         f"Broker rejects  : {rejections['broker_count']} {rejections['broker']}",
+        f"Reconciliation  : {_reconciliation_label(report.get('reconciliation'))}",
         f"End of replay   : {report['end_of_replay_policy']}",
         f"Fingerprint     : {report['report_fingerprint']}",
         "=" * 68,

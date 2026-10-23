@@ -258,6 +258,26 @@ class ChallengeProfile:
             raise ConfigurationError("challenge profile: max_daily_loss_amount must be > 0")
         if self.limits.max_total_loss_amount <= 0:
             raise ConfigurationError("challenge profile: max_total_loss_amount must be > 0")
+        expected_daily = (
+            self.reference_capital * self.limits.max_daily_loss_percent / 100.0
+        )
+        if abs(expected_daily - self.limits.max_daily_loss_amount) > 0.01:
+            raise ConfigurationError(
+                f"challenge profile: max_daily_loss_amount "
+                f"({self.limits.max_daily_loss_amount}) is inconsistent with "
+                f"{self.limits.max_daily_loss_percent}% of {self.reference_capital} "
+                f"({expected_daily:.2f})"
+            )
+        expected_total = (
+            self.reference_capital * self.limits.max_total_loss_percent / 100.0
+        )
+        if abs(expected_total - self.limits.max_total_loss_amount) > 0.01:
+            raise ConfigurationError(
+                f"challenge profile: max_total_loss_amount "
+                f"({self.limits.max_total_loss_amount}) is inconsistent with "
+                f"{self.limits.max_total_loss_percent}% of {self.reference_capital} "
+                f"({expected_total:.2f})"
+            )
         for step in self.steps:
             if step.profit_target_amount <= 0:
                 raise ConfigurationError(

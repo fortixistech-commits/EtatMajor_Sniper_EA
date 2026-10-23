@@ -86,6 +86,11 @@ rapports, jamais exclus.
 
 ## Phase 8 — Backtests, robustesse et sélection
 
+> **Note d'exécution (2026-10-22).** La Phase 8 livrée est le cockpit et
+> l'observabilité. Les travaux de ce chapitre deviennent la Phase 9 ;
+> l'adaptateur MT5 passe en Phase 10. Ce plan reste la référence
+> méthodologique.
+
 | Élément | Extension |
 | --- | --- |
 | `reporting/metrics.py` | profit net, espérance, profit factor, drawdown, nombre d'opérations, gain/perte moyens, pertes extrêmes, exposition, résultats par instrument/session/régime |

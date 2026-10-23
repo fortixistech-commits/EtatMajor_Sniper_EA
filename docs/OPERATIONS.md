@@ -1,6 +1,7 @@
 # Exploitation — laboratoire de simulation
 
-Ce document décrit les procédures d'exploitation du mode LABORATOIRE (Phase 2).
+Ce document décrit les procédures d'exploitation du mode LABORATOIRE
+(Phases 2 à 8).
 Le mode PAPER TRADING et le mode PRODUCTION n'existent pas encore : aucun
 chemin de ce dépôt ne peut envoyer un ordre à un broker.
 
@@ -112,7 +113,25 @@ account.final_equity == account.cash + account.unrealized_pnl
 `artifacts/journal.jsonl` contient la trace ordonnée des événements
 (`SIGNAL`, `RISK_DECISION`, `ORDER_SUBMITTED`, `ORDER_ACCEPTED`,
 `ORDER_REJECTED`, `ORDER_FILLED`, `ORDER_CANCELLED`, `POSITION_OPENED`,
-`POSITION_CLOSED`, `REPLAY_STARTED`, `REPLAY_FINISHED`).
+`POSITION_CLOSED`, `CHALLENGE_EVENT`, `CHALLENGE_FINALIZED`,
+`RECONCILIATION`, `REPLAY_STARTED`, `REPLAY_FINISHED`).
+
+### Cockpit opérateur (Phase 8)
+
+```bash
+.venv/bin/python -m etatmajor.cli cockpit \
+    --report artifacts/report.json \
+    --journal artifacts/journal.jsonl \
+    --html artifacts/cockpit.html \
+    --json artifacts/cockpit.json
+```
+
+Le cockpit ne rejoue rien et ne lit aucune horloge murale. Il vérifie
+l'empreinte du rapport, la séquence du journal, l'identité de session, le
+dernier événement, la réconciliation et le verdict de challenge. Le code
+retour vaut `0` si l'évidence est cohérente, `3` si une erreur est détectée
+(ou si `--strict` est actif et qu'un avertissement subsiste). Le HTML est
+autonome : CSS inline, aucun script, aucune ressource distante.
 
 ## 7. Vérifier la reproductibilité
 

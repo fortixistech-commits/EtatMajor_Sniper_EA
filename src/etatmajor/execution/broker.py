@@ -20,21 +20,67 @@ Execution model (Phase 2)
 
 from __future__ import annotations
 
+import math
 import random
 
 from ..core.config import ExecutionConfig
+from ..core.errors import ConfigurationError
 from ..core.events import Fill, Order
 from ..core.models import ExecutionEvent, OrderResult
 from ..core.types import OrderSide, OrderStatus, OrderType
+from ..data.instruments import BrokerSymbolSpec, InstrumentSpec
 from ..data.models import Bar
 
 
 class SimulatedBroker:
     """Deterministic broker simulation (seeded, no network access)."""
 
-    def __init__(self, config: ExecutionConfig, seed: int = 0) -> None:
+    def __init__(
+        self,
+        config: ExecutionConfig,
+        seed: int = 0,
+        instrument: InstrumentSpec | None = None,
+        broker_spec: BrokerSymbolSpec | None = None,
+    ) -> None:
         config.validate()
+        if (
+            instrument is not None
+            and broker_spec is not None
+            and broker_spec.instrument_id != instrument.instrument_id
+        ):
+            raise ConfigurationError(
+                f"broker symbol {broker_spec.symbol!r} maps to "
+                f"{broker_spec.instrument_id!r}, not {instrument.instrument_id!r}"
+            )
         self.config = config
+        self.instrument = instrument
+        self.broker_spec = broker_spec
+        self.min_quantity = (
+            broker_spec.min_quantity
+            if broker_spec is not None
+            else instrument.min_quantity
+            if instrument is not None
+            else config.min_quantity
+        )
+        self.quantity_step = (
+            broker_spec.quantity_step
+            if broker_spec is not None
+            else instrument.quantity_step
+            if instrument is not None
+            else config.quantity_step
+        )
+        self.max_quantity = (
+            broker_spec.max_quantity
+            if broker_spec is not None and broker_spec.max_quantity is not None
+            else instrument.max_quantity
+            if instrument is not None and instrument.max_quantity is not None
+            else config.max_quantity
+        )
+        self.lot_size = (
+            instrument.contract_size
+            if instrument is not None and instrument.contract_size is not None
+            else config.lot_size
+        )
         self._rng = random.Random(seed)
         self._order_seq = 0
         self.orders: list[Order] = []
@@ -60,11 +106,17 @@ class SimulatedBroker:
 
     def _commission(self, quantity: float) -> float:
         """Commission charged for one fill (entry and exit are charged apart)."""
-        lots = quantity / self.config.lot_size if self.config.lot_size else quantity
+        lots = quantity / self.lot_size if self.lot_size else quantity
         return (
             self.config.commission_per_lot_per_side * lots
             + self.config.commission_fixed_per_order
         )
+
+    def _round_price(self, price: float) -> float:
+        precision = (
+            self.instrument.price_precision if self.instrument is not None else 10
+        )
+        return round(price, precision)
 
     # -- order lifecycle ----------------------------------------------
     def submit(self, order: Order, ts_ns: int) -> Order:
@@ -89,19 +141,19 @@ class SimulatedBroker:
         return order
 
     def _pre_trade_check(self, order: Order) -> str | None:
-        if order.quantity <= 0:
-            return "invalid quantity: must be strictly positive"
-        if order.quantity < self.config.min_quantity:
+        if not math.isfinite(order.quantity) or order.quantity <= 0:
+            return "invalid quantity: must be finite and strictly positive"
+        if order.quantity < self.min_quantity:
             return (
                 f"invalid quantity {order.quantity}: below broker minimum "
-                f"{self.config.min_quantity}"
+                f"{self.min_quantity}"
             )
-        if order.quantity > self.config.max_quantity:
+        if order.quantity > self.max_quantity:
             return (
                 f"invalid quantity {order.quantity}: above broker maximum "
-                f"{self.config.max_quantity}"
+                f"{self.max_quantity}"
             )
-        step = self.config.quantity_step
+        step = self.quantity_step
         if step > 0:
             ratio = order.quantity / step
             if abs(ratio - round(ratio)) > 1e-9:
@@ -111,10 +163,28 @@ class SimulatedBroker:
                 )
         if order.side is OrderSide.SELL and not self.config.allow_short:
             return "short selling is disabled by the broker configuration"
-        if order.order_type is OrderType.LIMIT and order.limit_price is None:
-            return "limit order without a limit price"
-        if order.order_type is OrderType.STOP and order.stop_price is None:
-            return "stop order without a stop price"
+        if order.order_type is OrderType.LIMIT:
+            reason = self._check_price(order.limit_price, "limit")
+            if reason is not None:
+                return reason
+        if order.order_type is OrderType.STOP:
+            reason = self._check_price(order.stop_price, "stop")
+            if reason is not None:
+                return reason
+        return None
+
+    def _check_price(self, price: float | None, label: str) -> str | None:
+        if price is None:
+            return f"{label} order without a {label} price"
+        if not math.isfinite(price) or price <= 0.0:
+            return f"{label} order with an invalid price {price}"
+        if self.instrument is not None and not self.instrument.is_price_aligned(
+            price
+        ):
+            return (
+                f"{label} price {price} is not aligned with the tick size "
+                f"{self.instrument.tick_size}"
+            )
         return None
 
     def cancel(self, order: Order, ts_ns: int, reason: str = "") -> Order:
@@ -193,7 +263,7 @@ class SimulatedBroker:
             symbol=order.symbol,
             side=order.side,
             quantity=order.quantity,
-            price=round(price, 10),
+            price=self._round_price(price),
             commission=round(self._commission(order.quantity), 10),
             ts_ns=ts_ns,
         )
